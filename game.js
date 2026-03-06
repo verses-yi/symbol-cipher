@@ -20,12 +20,18 @@ const SYMBOLS = ['🌸', '🌙', '⭐', '🌿', '🦋', '🍃', '🌼', '🌟', 
 
 let gameState = {
   mode: 'word',
+  // Current puzzle state
   originalText: '',
   symbolMap: {},
   userMappings: {},
   hintsRemaining: 3,
   selectedSymbol: null,
-  solved: false
+  solved: false,
+  // Saved state for each mode
+  saved: {
+    word: { text: '', mappings: {}, map: {}, hints: 3, solved: false },
+    quote: { text: '', mappings: {}, map: {}, hints: 3, solved: false }
+  }
 };
 
 document.addEventListener('DOMContentLoaded', initGame);
@@ -71,12 +77,47 @@ function setupEventListeners() {
   });
 }
 
-function setMode(mode) {
-  gameState.mode = mode;
+function setMode(newMode) {
+  // Save current state before switching
+  if (gameState.originalText) {
+    gameState.saved[gameState.mode] = {
+      text: gameState.originalText,
+      mappings: {...gameState.userMappings},
+      map: {...gameState.symbolMap},
+      hints: gameState.hintsRemaining,
+      solved: gameState.solved
+    };
+  }
+  
+  // Switch mode
+  gameState.mode = newMode;
   document.querySelectorAll('.mode-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.mode === mode);
+    btn.classList.toggle('active', btn.dataset.mode === newMode);
   });
-  newPuzzle();
+  
+  // Check if there's saved state for this mode
+  const saved = gameState.saved[newMode];
+  if (saved && saved.text) {
+    // Restore saved puzzle
+    gameState.originalText = saved.text;
+    gameState.userMappings = {...saved.mappings};
+    gameState.symbolMap = {...saved.map};
+    gameState.hintsRemaining = saved.hints;
+    gameState.solved = saved.solved;
+    gameState.selectedSymbol = null;
+    renderPuzzle();
+    updateAlphabet();
+    updateStatus(saved.solved ? 'Puzzle already solved!' : 'Tap a symbol, then a letter');
+    
+    // Show/hide next button based on solved state
+    const nextBtn = document.getElementById('next-btn');
+    if (nextBtn) {
+      nextBtn.classList.toggle('visible', saved.solved);
+    }
+  } else {
+    // No saved state, create new puzzle
+    newPuzzle();
+  }
 }
 
 function newPuzzle() {
@@ -84,6 +125,7 @@ function newPuzzle() {
   gameState.selectedSymbol = null;
   gameState.hintsRemaining = 3;
   gameState.solved = false;
+  gameState.saved[gameState.mode] = { text: "", mappings: {}, map: {}, hints: 3, solved: false };
   
   const source = gameState.mode === 'word' ? WORDS : QUOTES;
   gameState.originalText = source[Math.floor(Math.random() * source.length)].toUpperCase();
