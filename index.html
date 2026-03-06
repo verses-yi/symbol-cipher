@@ -21,29 +21,15 @@
             <button class="mode-btn" data-mode="quote">Quote Mode</button>
         </div>
 
-        <!-- Progress Bar -->
-        <div class="progress-bar">
-            <div class="progress-fill"></div>
-        </div>
-
         <!-- Puzzle Display -->
         <div class="puzzle-container">
             <div id="puzzle-display" class="puzzle-display">
                 <!-- Symbols will be rendered here -->
             </div>
-            <div id="decoded-display" class="decoded-display hidden">
-                <!-- Decoded letters will appear here -->
-            </div>
         </div>
 
         <!-- Status Message -->
-        <div id="status-message" class="status-message"></div>
-
-        <!-- Symbol Selection Info -->
-        <div id="selection-info" class="selection-info hidden">
-            <span>Select a letter for: </span>
-            <span id="selected-symbol" class="selected-symbol"></span>
-        </div>
+        <div id="status-message" class="status-message">Select a symbol to begin</div>
 
         <!-- Alphabet Panel -->
         <div class="alphabet-container">
@@ -53,28 +39,11 @@
             </div>
         </div>
 
-        <!-- Symbol Panel (for viewing mappings) -->
-        <div class="symbol-panel">
-            <h3 class="symbol-panel-title">Your Mappings</h3>
-            <div id="mappings" class="mappings">
-                <!-- Active mappings will appear here -->
-            </div>
-        </div>
-
         <!-- Controls -->
         <div class="controls">
-            <button class="control-btn hint-btn" id="hint-btn">
-                <span class="btn-icon">💡</span>
-                Hint (<span id="hints-remaining">3</span>)
-            </button>
-            <button class="control-btn skip-btn" id="skip-btn">
-                <span class="btn-icon">⏭</span>
-                Skip
-            </button>
-            <button class="control-btn next-btn hidden" id="next-btn">
-                <span class="btn-icon">✨</span>
-                Next Puzzle
-            </button>
+            <button class="control-btn hint-btn" id="hint-btn">💡 Hint (3)</button>
+            <button class="control-btn skip-btn" id="skip-btn">⏭ Skip</button>
+            <button class="control-btn next-btn hidden" id="next-btn">✨ Next Puzzle</button>
         </div>
 
         <!-- Completion Modal -->
@@ -90,9 +59,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Confetti Canvas -->
-    <canvas id="confetti" class="confetti hidden"></canvas>
 
     <script src="game.js"></script>
 </body>
