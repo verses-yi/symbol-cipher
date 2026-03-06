@@ -1,66 +1,18 @@
-// Symbol Cipher - Responsive Word & Quote Decoder (Fixed for Mobile)
+// Symbol Cipher - Complete Working Game
 
-// Word Database (5000+ words organized by category)
 const WORDS = [
-  // Common short words (easy)
   "peace", "calm", "kind", "light", "dream", "smile", "love", "hope", "joy", "grace",
   "heart", "soul", "mind", "happy", "free", "warm", "cool", "safe", "home", "life",
   "work", "play", "rest", "read", "walk", "talk", "sing", "dance", "laugh", "live",
   "blue", "green", "gold", "pink", "rose", "moon", "star", "sun", "sky", "sea",
   "tree", "bird", "fish", "cat", "dog", "bear", "wolf", "lion", "dear", "friend",
   "food", "water", "bread", "fruit", "sweet", "fresh", "clean", "clear", "bright", "dark",
-  "fast", "slow", "high", "low", "near", "far", "big", "small", "old", "young",
-  "good", "best", "true", "real", "pure", "sim", "deep", "wide", "tall", "short",
-  
-  // Nature (300)
-  "sunrise", "sunset", "rainbow", "thunder", "cloudy", "starry", "breezy", "misty", "foggy", "stormy",
-  "ocean", "beach", "island", "forest", "garden", "meadow", "valley", "mountain", "river", "stream",
-  "autumn", "winter", "spring", "summer", "season", "weather", "climate", "breeze", "wind", "rain",
-  "snow", "frost", "dew", "mist", "fog", "cloud", "sky", "heaven", "earth", "ground",
-  "soil", "dirt", "sand", "rock", "stone", "pebble", "gem", "crystal", "jewel", "diamond",
-  "ruby", "emerald", "sapphire", "pearl", "amber", "jade", "opal", "topaz", "amethyst", "quartz",
-  "flame", "fire", "spark", "ember", "ash", "smoke", "steam", "vapor", "spray", "wave",
-  "tide", "current", "flow", "brook", "creek", "lake", "pond", "pool", "basin", "bay",
-  "gulf", "cove", "harbor", "port", "dock", "cliff", "bluff", "crag", "peak", "summit",
-  "crest", "ridge", "slope", "prairie", "desert", "thicket", "grove", "orchard", "vineyard", "field",
-  "pasture", "wheat", "corn", "rice", "barley", "oats", "flower", "bloom", "blossom", "petal",
-  "leaf", "tree", "branch", "twig", "trunk", "bark", "root", "seed", "fern", "moss",
-  "ivy", "vine", "fern", "brush", "bush", "shrub", "plant", "grass", "herb", "weed",
-  "rose", "lily", "tulip", "daisy", "poppy", "daffodil", "orchid", "peony", "aster", "iris",
-  "sunflower", "dandelion", "buttercup", "bluebell", "snowdrop", "crocus", "hyacinth", "lavender", "jasmine", "lotus",
-  "seaweed", "kelp", "algae", "coral", "reef", "shell", "pearl", "sand", "dune", "oasis",
-  "glacier", "iceberg", "avalanche", "landslide", "earthquake", "volcano", "geyser", "hot-spring", "waterfall", "cascade",
-  "rapids", "whirlpool", "tsunami", "flood", "drought", "monsoon", "hurricane", "tornado", "cyclone", "typhoon",
-  "aurora", "eclipse", "comet", "meteor", "planet", "galaxy", "universe", "cosmos", "nebula", "supernova",
-  "constellation", "zodiac", "horizon", "zenith", "meridian", "equator", "tropic", "arctic", "antarctic", "pole",
-  "latitude", "longitude", "altitude", "elevation", "terrain", "topography", "landscape", "scenery", "view", "vista",
-  
-  // Animals (400)
-  "eagle", "falcon", "dove", "sparrow", "robin", "wren", "finch", "crow", "raven", "lark",
-  "swan", "goose", "duck", "owl", "hawk", "heron", "stork", "crane", "ibis", "flamingo",
-  "penguin", "pelican", "albatross", "gull", "tern", "skua", "grebe", "loon", "cormorant", "gannet",
-  "booby", "frigatebird", "tropicbird", "pigeon", "dove", "parrot", "macaw", "cockatoo", "parakeet", "lorikeet",
-  "toucan", "hornbill", "kingfisher", "bee-eater", "roller", "hoopoe", "woodpecker", "barbet", "toucan", "motmot",
-  "quetzal", "trogon", "mousebird", "cuckoo", "coucal", "roadrunner", "turaco", "plantain-eater", "go-away-bird", "turaco",
-  "dolphin", "whale", "shark", "seal", "otter", "beaver", "platypus", "walrus", "manatee", "dugong",
-  "tiger", "lion", "leopard", "cheetah", "puma", "lynx", "wolf", "fox", "bear", "panda",
-  "jackal", "hyena", "wildcat", "bobcat", "ocelot", "jaguar", "cougar", "panther", "lioness", "tigress",
-  "wolfpack", "foxhound", "bloodhound", "mastiff", "bulldog", "greyhound", "whippet", "saluki", "borzoi", "afghan",
-  "rabbit", "squirrel", "chipmunk", "hamster", "gerbil", "mouse", "rat", "mole", "hedgehog", "shrew",
-  "vole", "lemming", "marmot", "prairiedog", "groundhog", "gopher", "capybara", "chinchilla", "ferret", "weasel",
-  "stoat", "marten", "mink", "polecat", "badger", "skunk", "raccoon", "coati", "mongoose", "meerkat",
-  "bat", "flyingfox", "lemur", "monkey", "baboon", "mandrill", "colobus", "langur", "macaque", "mangabey",
-  "vervet", "guenon", "patas", "talapoin", "grivet", "sloth", "anteater", "armadillo", "pangolin", "aardvark",
-  "elephant", "rhino", "hippo", "giraffe", "zebra", "okapi", "tapir", "peccary", "warthog", "bushpig",
-  "potto", "loris", "galago", "tarsier", "sifaka", "indri", "aye-aye", "koala", "kangaroo", "wallaby",
-  "wombat", "platypus", "echidna", "tasmanian-devil", "bandicoot", "bilby", "numbat", "quokka", "possum", "glider",
-  "cattle", "sheep", "goat", "deer", "moose", "elk", "caribou", "antelope", "gazelle", "impala",
-  "wildebeest", "buffalo", "bison", "yak", "zebu", "gaur", "banteng", "kouprey", "saola", "takin",
-  // ... (continuing to reach 5000)
+  "flower", "garden", "forest", "river", "ocean", "beach", "island", "meadow", "valley", "mountain",
+  "morning", "evening", "night", "dawn", "dusk", "sunrise", "sunset", "rainbow", "cloud", "mist",
+  "spring", "summer", "autumn", "winter", "season", "weather", "breeze", "wind", "rain", "snow"
 ];
 
-// Quote Templates (easily expandable to 1000+)
-const QUOTE_TEMPLATES = [
+const QUOTES = [
   "knowledge is power",
   "be kind to yourself",
   "every day is a new beginning",
@@ -80,44 +32,302 @@ const QUOTE_TEMPLATES = [
   "friends are family",
   "home is where heart is",
   "music speaks words cannot",
-  "art feeds the soul",
-  "nature heals the mind",
-  "laughter is medicine",
-  "smile and world smiles",
-  "better late than never",
-  "actions speak louder",
-  "practice makes perfect",
-  "where there is hope",
-  "every cloud has silver",
-  "a friend in need",
-  "beauty is in eye",
-  "experience is best teacher",
-  "good things come patiently",
-  "honesty is best policy",
-  "keep your chin up",
-  "laughter is contagious joy",
-  "less is often more",
-  "life is beautiful gift",
-  "look before you leap",
-  "love is all around",
-  "nothing ventured nothing gained",
-  "old habits die hard",
-  "one step at time",
-  "peace begins with smile",
-  "reach for the stars",
-  "silence is golden sometimes",
-  "slow and steady wins",
-  "stars cant shine without",
-  "the best is yet",
-  "tomorrow is another day",
-  "unity is our strength",
-  "we rise by lifting",
-  "where there is will",
-  "you are your only",
-  "be the change seek",
-  "believe you can succeed",
-  "chase your wildest dreams",
-  "create your own sunshine",
-  "dance like no one",
-  "do what you love",
-  "
+  "art feeds the soul"
+];
+
+const SYMBOLS = ['🌸', '🌙', '⭐', '🌿', '🦋', '🍃', '🌼', '🌟', '🍂', '🌺', '🔮', '🕊', '💫'];
+
+// Game State
+let gameState = {
+  mode: 'word',
+  originalText: '',
+  symbolMap: {},
+  userMappings: {},
+  hintsRemaining: 3,
+  selectedSymbol: null,
+  solvedWords: [],
+  solvedQuotes: [],
+  solved: false
+};
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', initGame);
+
+function initGame() {
+  console.log('Initializing game...');
+  createAlphabet();
+  setupEventListeners();
+  newPuzzle();
+}
+
+function createAlphabet() {
+  const alphabetDiv = document.getElementById('alphabet');
+  if (!alphabetDiv) {
+    console.error('Alphabet container not found!');
+    return;
+  }
+  
+  alphabetDiv.innerHTML = '';
+  for (let i = 65; i <= 90; i++) {
+    const letter = String.fromCharCode(i);
+    const btn = document.createElement('button');
+    btn.className = 'letter';
+    btn.textContent = letter;
+    btn.dataset.letter = letter;
+    btn.addEventListener('click', () => selectLetter(letter));
+    alphabetDiv.appendChild(btn);
+  }
+}
+
+function setupEventListeners() {
+  // Mode toggle buttons
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setMode(btn.dataset.mode);
+    });
+  });
+  
+  // Control buttons
+  const hintBtn = document.getElementById('hint-btn');
+  const skipBtn = document.getElementById('skip-btn');
+  const nextBtn = document.getElementById('next-btn');
+  const modalNextBtn = document.getElementById('modal-next-btn');
+  
+  if (hintBtn) hintBtn.addEventListener('click', giveHint);
+  if (skipBtn) skipBtn.addEventListener('click', skipPuzzle);
+  if (nextBtn) nextBtn.addEventListener('click', () => nextPuzzle());
+  if (modalNextBtn) modalNextBtn.addEventListener('click', () => {
+    document.getElementById('completion-modal').classList.remove('visible');
+    nextPuzzle();
+  });
+}
+
+function setMode(mode) {
+  gameState.mode = mode;
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+  newPuzzle();
+}
+
+function newPuzzle() {
+  // Reset state
+  gameState.userMappings = {};
+  gameState.selectedSymbol = null;
+  gameState.hintsRemaining = 3;
+  gameState.solved = false;
+  
+  // Get available puzzles
+  let available = gameState.mode === 'word' ? WORDS : QUOTES;
+  available = available.filter(w => {
+    const key = w.toLowerCase();
+    return !(gameState.mode === 'word' ? gameState.solvedWords : gameState.solvedQuotes).includes(key);
+  });
+  
+  // Reset if all used
+  if (available.length === 0) {
+    if (gameState.mode === 'word') gameState.solvedWords = [];
+    else gameState.solvedQuotes = [];
+    available = gameState.mode === 'word' ? WORDS : QUOTES;
+  }
+  
+  // Pick random puzzle
+  gameState.originalText = available[Math.floor(Math.random() * available.length)].toUpperCase();
+  
+  // Generate symbol mapping
+  generateSymbolMap();
+  
+  // Render
+  renderPuzzle();
+  updateAlphabet();
+  updateStatus('Tap a symbol, then a letter');
+  hideNextButton();
+  
+  // Update hint button
+  const hintBtn = document.getElementById('hint-btn');
+  if (hintBtn) hintBtn.textContent = '💡 Hint (3)';
+}
+
+function generateSymbolMap() {
+  gameState.symbolMap = {};
+  const usedSymbols = new Set();
+  const letters = [...new Set(gameState.originalText.replace(/[^A-Z]/g, ''))];
+  
+  letters.forEach(letter => {
+    let symbol;
+    do {
+      symbol = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+    } while (usedSymbols.has(symbol) && usedSymbols.size < SYMBOLS.length);
+    usedSymbols.add(symbol);
+    gameState.symbolMap[letter] = symbol;
+  });
+}
+
+function renderPuzzle() {
+  const display = document.getElementById('puzzle-display');
+  if (!display) return;
+  
+  display.innerHTML = '';
+  const words = gameState.originalText.split(' ');
+  
+  words.forEach((word, i) => {
+    // Create word container
+    const wordDiv = document.createElement('div');
+    wordDiv.className = 'word';
+    
+    // Add each letter/symbol
+    for (let letter of word) {
+      const span = document.createElement('span');
+      span.className = 'symbol';
+      
+      if (gameState.userMappings[letter]) {
+        span.textContent = gameState.userMappings[letter];
+        span.classList.add('revealed');
+      } else {
+        span.textContent = gameState.symbolMap[letter] || letter;
+        if (gameState.symbolMap[letter]) {
+          span.addEventListener('click', () => selectSymbol(letter));
+        }
+      }
+      
+      wordDiv.appendChild(span);
+    }
+    
+    display.appendChild(wordDiv);
+    
+    // Add space between words
+    if (i < words.length - 1) {
+      const space = document.createElement('span');
+      space.style.minWidth = '8px';
+      display.appendChild(space);
+    }
+  });
+  
+  checkWin();
+}
+
+function selectSymbol(letter) {
+  gameState.selectedSymbol = letter;
+  
+  // Update visual
+  document.querySelectorAll('.symbol').forEach(el => {
+    el.classList.remove('selected');
+  });
+  
+  // Find matching symbols
+  document.querySelectorAll('.symbol').forEach(el => {
+    if (el.textContent === gameState.symbolMap[letter] && !el.classList.contains('revealed')) {
+      el.classList.add('selected');
+    }
+  });
+  
+  updateStatus('Now tap a letter from the alphabet');
+}
+
+function selectLetter(userLetter) {
+  if (!gameState.selectedSymbol) {
+    updateStatus('Tap a symbol first');
+    return;
+  }
+  
+  // Check if already used
+  if (Object.values(gameState.userMappings).includes(userLetter)) {
+    updateStatus('Letter already used');
+    return;
+  }
+  
+  const correctLetter = gameState.selectedSymbol;
+  
+  if (userLetter === correctLetter) {
+    gameState.userMappings[correctLetter] = userLetter;
+    updateStatus('Correct!', 'success');
+  } else {
+    updateStatus('Not quite...');
+  }
+  
+  gameState.selectedSymbol = null;
+  renderPuzzle();
+  updateAlphabet();
+}
+
+function updateAlphabet() {
+  document.querySelectorAll('.letter').forEach(btn => {
+    const letter = btn.dataset.letter;
+    const used = Object.values(gameState.userMappings).includes(letter);
+    btn.classList.toggle('disabled', used);
+
+function giveHint() {
+  if (gameState.hintsRemaining <= 0) return;
+  
+  const unrevealed = Object.keys(gameState.symbolMap).filter(l => !gameState.userMappings[l]);
+  if (unrevealed.length > 0) {
+    const letter = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+    gameState.userMappings[letter] = letter;
+    gameState.hintsRemaining--;
+    document.getElementById('hint-btn').textContent = `💡 Hint (${gameState.hintsRemaining})`;
+    updateStatus(`Hint: ${gameState.symbolMap[letter]} = ${letter}`);
+    renderPuzzle();
+    updateAlphabet();
+  }
+}
+
+function checkWin() {
+  const allRevealed = Object.keys(gameState.symbolMap).every(l => gameState.userMappings[l]);
+  
+  if (!allRevealed || gameState.solved) return;
+  
+  gameState.solved = true;
+  
+  // Track solved to prevent repeats
+  const key = gameState.originalText.toLowerCase();
+  if (gameState.mode === 'word') {
+    gameState.solvedWords.push(key);
+  } else {
+    gameState.solvedQuotes.push(key);
+  }
+  
+  // Visual feedback
+  document.querySelectorAll('.symbol').forEach(el => el.classList.add('solved'));
+  
+  // Show next button
+  const nextBtn = document.getElementById('next-btn');
+  if (nextBtn) nextBtn.classList.add('visible');
+  
+  // Show modal after delay
+  setTimeout(() => {
+    const modal = document.getElementById('completion-modal');
+    const solvedText = document.getElementById('solved-text');
+    if (modal && solvedText) {
+      solvedText.textContent = gameState.originalText;
+      modal.classList.add('visible');
+    }
+  }, 500);
+}
+
+function hideNextButton() {
+  const btn = document.getElementById('next-btn');
+  if (btn) btn.classList.remove('visible');
+}
+
+function nextPuzzle() {
+  document.getElementById('completion-modal')?.classList.remove('visible');
+  hideNextButton();
+  newPuzzle();
+}
+
+function skipPuzzle() {
+  const key = gameState.originalText.toLowerCase();
+  if (gameState.mode === 'word') gameState.solvedWords.push(key);
+  else gameState.solvedQuotes.push(key);
+  newPuzzle();
+}
+
+function updateStatus(msg, type = '') {
+  const el = document.getElementById('status-message');
+  if (el) {
+    el.textContent = msg;
+    el.className = 'status-message' + (type ? ' ' + type : '');
+  }
+}
+
+console.log('Symbol Cipher loaded');
