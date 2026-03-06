@@ -1,4 +1,5 @@
-/* Symbol Cipher - Relaxing Styles */
+/* Symbol Cipher - Mobile-Responsive Styles */
+
 * {
     margin: 0;
     padding: 0;
@@ -24,56 +25,63 @@ body {
     color: var(--text-dark);
     display: flex;
     justify-content: center;
-    align-items: center;
-    padding: 20px;
+    align-items: flex-start;
+    padding: 10px;
+    overflow-x: hidden;
 }
 
 .container {
     width: 100%;
     max-width: 600px;
     background: rgba(255, 255, 255, 0.95);
-    border-radius: 24px;
+    border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-    padding: 30px;
+    padding: 20px;
+    margin: 0 auto;
 }
 
+/* Header */
 .header {
     text-align: center;
-    margin-bottom: 25px;
+    margin-bottom: 15px;
 }
 
 .title {
     font-family: 'Playfair Display', serif;
-    font-size: 2.2rem;
+    font-size: clamp(1.5rem, 5vw, 2.2rem);
     font-weight: 700;
     background: var(--primary-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    line-height: 1.2;
 }
 
 .subtitle {
-    font-size: 1rem;
+    font-size: clamp(0.85rem, 3vw, 1rem);
     color: var(--text-muted);
     font-style: italic;
+    margin-top: 5px;
 }
 
+/* Mode Toggle */
 .mode-toggle {
     display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 8px;
+    margin-bottom: 15px;
     justify-content: center;
 }
 
 .mode-btn {
     flex: 1;
-    padding: 12px 20px;
+    padding: 10px 15px;
     border: 2px solid var(--lavender);
     background: white;
-    border-radius: 12px;
+    border-radius: 10px;
     font-family: 'Crimson Text', serif;
-    font-size: 1rem;
+    font-size: clamp(0.85rem, 3vw, 1rem);
     cursor: pointer;
     transition: all 0.3s ease;
+    white-space: nowrap;
 }
 
 .mode-btn.active {
@@ -82,40 +90,47 @@ body {
     border-color: var(--accent);
 }
 
+/* Puzzle Display - MOBILE OPTIMIZED */
 .puzzle-container {
     background: linear-gradient(145deg, #faf8ff 0%, #f0f4ff 100%);
-    border-radius: 16px;
-    padding: 30px;
-    margin-bottom: 20px;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
     text-align: center;
+    overflow-x: auto;
+    max-width: 100%;
 }
 
 .puzzle-display {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 8px;
-    font-size: 2rem;
+    gap: 4px;
+    font-size: clamp(1.2rem, 4vw, 1.8rem);
+    line-height: 1.4;
 }
 
 .word {
     display: flex;
-    gap: 5px;
-    margin: 5px 10px;
+    gap: 2px;
+    margin: 2px 4px;
+    flex-wrap: nowrap;
 }
 
 .symbol {
-    width: 50px;
-    height: 60px;
+    width: clamp(32px, 8vw, 45px);
+    height: clamp(38px, 10vw, 55px);
     display: flex;
     align-items: center;
     justify-content: center;
     background: white;
-    border-radius: 10px;
+    border-radius: 8px;
     border: 2px solid var(--lavender);
     cursor: pointer;
     transition: all 0.3s ease;
     user-select: none;
+    font-size: clamp(1rem, 3vw, 1.3rem);
+    flex-shrink: 0;
 }
 
 .symbol:hover:not(.solved) {
@@ -136,53 +151,57 @@ body {
     cursor: default;
 }
 
+/* Status Message */
 .status-message {
     text-align: center;
-    min-height: 30px;
-    font-size: 1rem;
+    min-height: 24px;
+    font-size: clamp(0.85rem, 2.5vw, 1rem);
     color: var(--text-muted);
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
+/* Alphabet Panel - MOBILE OPTIMIZED */
 .alphabet-container {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .alphabet-title {
     text-align: center;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
 }
 
 .alphabet {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 5px;
+    gap: 3px;
+    max-width: 100%;
 }
 
 .letter {
-    width: 35px;
-    height: 35px;
+    width: clamp(28px, 7vw, 35px);
+    height: clamp(28px, 7vw, 35px);
     display: flex;
     align-items: center;
     justify-content: center;
     background: white;
     border: 2px solid var(--lavender);
-    border-radius: 8px;
-    font-size: 1.1rem;
+    border-radius: 6px;
+    font-size: clamp(0.85rem, 2.5vw, 1.1rem);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
 .letter:hover:not(.disabled) {
     background: var(--light-blue);
     border-color: var(--accent);
-    transform: scale(1.1);
+    transform: scale(1.05);
 }
 
 .letter.disabled {
@@ -198,20 +217,26 @@ body {
     border-color: var(--accent);
 }
 
+/* Controls - MOBILE OPTIMIZED */
 .controls {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .control-btn {
-    padding: 12px 24px;
+    padding: 10px 18px;
     border: none;
-    border-radius: 12px;
+    border-radius: 10px;
     font-family: 'Crimson Text', serif;
-    font-size: 1rem;
+    font-size: clamp(0.85rem, 2.5vw, 1rem);
     cursor: pointer;
     transition: all 0.3s ease;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 80px;
+    max-width: 140px;
 }
 
 .hint-btn {
@@ -232,8 +257,15 @@ body {
 
 .next-btn.visible {
     display: block;
+    animation: pulse 1.5s infinite;
 }
 
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(246, 224, 94, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(246, 224, 94, 0); }
+}
+
+/* Modal - MOBILE OPTIMIZED */
 .modal {
     position: fixed;
     top: 0;
@@ -245,6 +277,7 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    padding: 15px;
 }
 
 .modal.visible {
@@ -253,43 +286,47 @@ body {
 
 .modal-content {
     background: white;
-    border-radius: 24px;
-    padding: 40px;
+    border-radius: 20px;
+    padding: 25px;
     text-align: center;
-    max-width: 400px;
+    max-width: 350px;
+    width: 100%;
 }
 
 .sparkles {
-    font-size: 2.5rem;
-    margin-bottom: 15px;
+    font-size: 2rem;
+    margin-bottom: 10px;
 }
 
 .modal-title {
     font-family: 'Playfair Display', serif;
-    font-size: 1.8rem;
-    margin-bottom: 15px;
+    font-size: clamp(1.4rem, 4vw, 1.8rem);
+    margin-bottom: 10px;
 }
 
 .solved-text {
-    font-size: 1.3rem;
+    font-size: clamp(1rem, 3vw, 1.3rem);
     color: var(--text-dark);
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     font-style: italic;
 }
 
 .modal-buttons {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .modal-btn {
-    padding: 12px 24px;
+    padding: 10px 20px;
     border: none;
-    border-radius: 12px;
+    border-radius: 10px;
     font-family: 'Crimson Text', serif;
-    font-size: 1rem;
+    font-size: clamp(0.9rem, 2.5vw, 1rem);
     cursor: pointer;
+    flex: 1;
+    min-width: 100px;
 }
 
 .modal-btn.primary {
@@ -304,4 +341,31 @@ body {
 
 .hidden {
     display: none !important;
+}
+
+/* Small screens (phones) */
+@media (max-width: 400px) {
+    .container {
+        padding: 12px;
+        border-radius: 16px;
+    }
+    
+    .symbol {
+        width: 28px;
+        height: 34px;
+        font-size: 0.9rem;
+    }
+    
+    .letter {
+        width: 26px;
+        height: 26px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Prevent zoom on input for iOS */
+@media screen and (max-width: 768px) {
+    input, select, textarea {
+        font-size: 16px;
+    }
 }
