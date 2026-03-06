@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symbol Cipher - Relaxing Word & Quote Decoder</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="title">Symbol Cipher</h1>
+            <p class="subtitle">A Relaxing Word & Quote Decoder</p>
+        </header>
+
+        <!-- Mode Toggle -->
+        <div class="mode-toggle">
+            <button class="mode-btn active" data-mode="word">Word Mode</button>
+            <button class="mode-btn" data-mode="quote">Quote Mode</button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+
+        <!-- Puzzle Display -->
+        <div class="puzzle-container">
+            <div id="puzzle-display" class="puzzle-display">
+                <!-- Symbols will be rendered here -->
+            </div>
+            <div id="decoded-display" class="decoded-display hidden">
+                <!-- Decoded letters will appear here -->
+            </div>
+        </div>
+
+        <!-- Status Message -->
+        <div id="status-message" class="status-message"></div>
+
+        <!-- Symbol Selection Info -->
+        <div id="selection-info" class="selection-info hidden">
+            <span>Select a letter for: </span>
+            <span id="selected-symbol" class="selected-symbol"></span>
+        </div>
+
+        <!-- Alphabet Panel -->
+        <div class="alphabet-container">
+            <h3 class="alphabet-title">Alphabet</h3>
+            <div id="alphabet" class="alphabet">
+                <!-- Letters A-Z will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Symbol Panel (for viewing mappings) -->
+        <div class="symbol-panel">
+            <h3 class="symbol-panel-title">Your Mappings</h3>
+            <div id="mappings" class="mappings">
+                <!-- Active mappings will appear here -->
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="control-btn hint-btn" id="hint-btn">
+                <span class="btn-icon">💡</span>
+                Hint (<span id="hints-remaining">3</span>)
+            </button>
+            <button class="control-btn skip-btn" id="skip-btn">
+                <span class="btn-icon">⏭</span>
+                Skip
+            </button>
+            <button class="control-btn next-btn hidden" id="next-btn">
+                <span class="btn-icon">✨</span>
+                Next Puzzle
+            </button>
+        </div>
+
+        <!-- Completion Modal -->
+        <div id="completion-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="sparkles">✨🌸✨</div>
+                <h2 class="modal-title">Puzzle Solved!</h2>
+                <p id="solved-text" class="solved-text"></p>
+                <div class="modal-buttons">
+                    <button class="modal-btn primary" id="modal-next-btn">Next Puzzle</button>
+                    <button class="modal-btn secondary" id="save-quote-btn">Save Quote</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti" class="confetti hidden"></canvas>
+
+    <script src="game.js"></script>
+</body>
+</html>
