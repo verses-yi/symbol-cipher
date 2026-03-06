@@ -1,11 +1,15 @@
-// Symbol Cipher - Complete Working Game (FIXED)
+// Symbol Cipher - Complete Working Game
 
 const WORDS = [
   "peace", "calm", "kind", "light", "dream", "smile", "love", "hope", "joy", "grace",
   "heart", "soul", "mind", "happy", "free", "warm", "cool", "safe", "home", "life",
   "work", "play", "rest", "read", "walk", "talk", "sing", "dance", "laugh", "live",
   "blue", "green", "gold", "pink", "rose", "moon", "star", "sun", "sky", "sea",
-  "tree", "bird", "fish", "cat", "dog", "bear", "wolf", "lion", "dear", "friend"
+  "tree", "bird", "fish", "cat", "dog", "bear", "wolf", "lion", "dear", "friend",
+  "food", "water", "bread", "fruit", "sweet", "fresh", "clean", "clear", "bright", "dark",
+  "flower", "garden", "forest", "river", "ocean", "beach", "island", "meadow", "valley", "mountain",
+  "morning", "evening", "night", "dawn", "dusk", "sunrise", "sunset", "rainbow", "cloud", "mist",
+  "spring", "summer", "autumn", "winter", "season", "weather", "breeze", "wind", "rain", "snow"
 ];
 
 const QUOTES = [
@@ -20,14 +24,12 @@ const SYMBOLS = ['🌸', '🌙', '⭐', '🌿', '🦋', '🍃', '🌼', '🌟', 
 
 let gameState = {
   mode: 'word',
-  // Current puzzle state
   originalText: '',
   symbolMap: {},
   userMappings: {},
   hintsRemaining: 3,
   selectedSymbol: null,
   solved: false,
-  // Saved state for each mode
   saved: {
     word: { text: '', mappings: {}, map: {}, hints: 3, solved: false },
     quote: { text: '', mappings: {}, map: {}, hints: 3, solved: false }
@@ -69,7 +71,7 @@ function setupEventListeners() {
   });
   
   document.getElementById('hint-btn')?.addEventListener('click', giveHint);
-  document.getElementById('skip-btn')?.addEventListener('click', newPuzzle);
+  document.getElementById('skip-btn')?.addEventListener('click', handleSkipOrNext);
   document.getElementById('next-btn')?.addEventListener('click', () => nextPuzzle());
   document.getElementById('modal-next-btn')?.addEventListener('click', () => {
     document.getElementById('completion-modal')?.classList.remove('visible');
@@ -77,8 +79,15 @@ function setupEventListeners() {
   });
 }
 
+function handleSkipOrNext() {
+  if (gameState.solved) {
+    nextPuzzle();
+  } else {
+    skipPuzzle();
+  }
+}
+
 function setMode(newMode) {
-  // Save current state before switching
   if (gameState.originalText) {
     gameState.saved[gameState.mode] = {
       text: gameState.originalText,
@@ -89,16 +98,13 @@ function setMode(newMode) {
     };
   }
   
-  // Switch mode
   gameState.mode = newMode;
   document.querySelectorAll('.mode-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.mode === newMode);
   });
   
-  // Check if there's saved state for this mode
   const saved = gameState.saved[newMode];
   if (saved && saved.text) {
-    // Restore saved puzzle
     gameState.originalText = saved.text;
     gameState.userMappings = {...saved.mappings};
     gameState.symbolMap = {...saved.map};
@@ -108,14 +114,8 @@ function setMode(newMode) {
     renderPuzzle();
     updateAlphabet();
     updateStatus(saved.solved ? 'Puzzle already solved!' : 'Tap a symbol, then a letter');
-    
-    // Show/hide next button based on solved state
-    const nextBtn = document.getElementById('next-btn');
-    if (nextBtn) {
-      nextBtn.classList.toggle('visible', saved.solved);
-    }
+    updateSkipButton();
   } else {
-    // No saved state, create new puzzle
     newPuzzle();
   }
 }
@@ -125,7 +125,7 @@ function newPuzzle() {
   gameState.selectedSymbol = null;
   gameState.hintsRemaining = 3;
   gameState.solved = false;
-  gameState.saved[gameState.mode] = { text: "", mappings: {}, map: {}, hints: 3, solved: false };
+  gameState.saved[gameState.mode] = { text: '', mappings: {}, map: {}, hints: 3, solved: false };
   
   const source = gameState.mode === 'word' ? WORDS : QUOTES;
   gameState.originalText = source[Math.floor(Math.random() * source.length)].toUpperCase();
@@ -134,9 +134,16 @@ function newPuzzle() {
   renderPuzzle();
   updateAlphabet();
   updateStatus('Tap a symbol, then a letter');
+  updateSkipButton();
   
-  document.getElementById('next-btn')?.classList.remove('visible');
   document.getElementById('completion-modal')?.classList.remove('visible');
+}
+
+function updateSkipButton() {
+  const skipBtn = document.getElementById('skip-btn');
+  if (skipBtn) {
+    skipBtn.textContent = gameState.solved ? 'Next ➔' : '⏭ Skip';
+  }
 }
 
 function generateSymbolMap() {
@@ -255,7 +262,9 @@ function checkWin() {
   
   gameState.solved = true;
   document.querySelectorAll('.symbol').forEach(el => el.classList.add('solved'));
-  document.getElementById('next-btn')?.classList.add('visible');
+  
+  const skipBtn = document.getElementById('skip-btn');
+  if (skipBtn) skipBtn.textContent = 'Next ➔';
   
   setTimeout(() => {
     const modal = document.getElementById('completion-modal');
@@ -267,9 +276,13 @@ function checkWin() {
   }, 500);
 }
 
+function skipPuzzle() {
+  gameState.saved[gameState.mode] = { text: '', mappings: {}, map: {}, hints: 3, solved: false };
+  newPuzzle();
+}
+
 function nextPuzzle() {
   document.getElementById('completion-modal')?.classList.remove('visible');
-  document.getElementById('next-btn')?.classList.remove('visible');
   newPuzzle();
 }
 
