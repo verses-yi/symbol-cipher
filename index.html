@@ -15,10 +15,21 @@
             <p class="subtitle">A Relaxing Word & Quote Decoder</p>
         </header>
 
+        <!-- Daily Stats Panel (shown in Daily Quote mode) -->
+        <div id="daily-stats" class="daily-stats hidden">
+            <div class="stat-row">
+                <span>Day: <strong id="current-day">1</strong></span>
+                <span>Solved: <strong id="solved-count">0</strong></span>
+                <span>Missed: <strong id="missed-count">0</strong></span>
+            </div>
+            <div class="quote-author" id="quote-author"></div>
+        </div>
+
         <!-- Mode Toggle -->
         <div class="mode-toggle">
             <button class="mode-btn active" data-mode="word">Word Mode</button>
             <button class="mode-btn" data-mode="quote">Quote Mode</button>
+            <button class="mode-btn" data-mode="daily_quote">Daily Quote</button>
         </div>
 
         <!-- Puzzle Display -->
@@ -46,6 +57,11 @@
             <button class="control-btn next-btn hidden" id="next-btn">✨ Next Puzzle</button>
         </div>
 
+        <!-- Daily Quote Controls -->
+        <div id="daily-controls" class="daily-controls hidden">
+            <button class="control-btn reset-btn" id="reset-daily-btn">🔄 Reset to Day 1</button>
+        </div>
+
         <!-- Completion Modal -->
         <div id="completion-modal" class="modal hidden">
             <div class="modal-content">
@@ -58,8 +74,26 @@
                 </div>
             </div>
         </div>
+
+        <!-- Daily Locked Modal -->
+        <div id="daily-locked-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="sparkles">🔒✨</div>
+                <h2 class="modal-title">Daily Quote Solved!</h2>
+                <p>You've solved today's quote. Come back tomorrow for a new one!</p>
+                <div class="daily-summary">
+                    <p>Day <span id="locked-day">1</span> Complete</p>
+                    <p>Stats: <span id="locked-solved">0</span> solved, <span id="locked-missed">0</span> missed</p>
+                </div>
+                <div class="modal-buttons">
+                    <button class="modal-btn primary" id="locked-ok-btn">Got it</button>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <script src="daily-quotes-data.js"></script>
     <script src="game.js"></script>
+    <script src="daily-mode.js"></script>
 </body>
 </html>
