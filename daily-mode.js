@@ -1,246 +1,173 @@
-// =====================================================
-// DAILY QUOTE MODE - Extension for Symbol Cipher
-// =====================================================
+// Daily Quote Mode for Symbol Cipher
+// Hooks into existing game functions
 
-// Daily Quote State
-let dailyState = {
-    currentDay: 1,
-    solvedCount: 0,
-    missedCount: 0,
-    lastSolvedDate: null,
-    dayProgress: {}, // day -> { solved: bool, mappings: {}, text: '' }
-    locked: false
-};
-
-const STORAGE_KEY = 'symbol_cipher_daily_progress';
-
-// Load daily progress from localStorage
-function loadDailyProgress() {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            dailyState = { ...dailyState, ...parsed };
-            checkForDayReset();
-        }
-    } catch (e) {
-        console.log('No saved daily progress');
-    }
-}
-
-// Save daily progress to localStorage
-function saveDailyProgress() {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(dailyState));
-    } catch (e) {
-        console.error('Failed to save daily progress', e);
-    }
-}
-
-// Get today's date as string YYYY-MM-DD
-function getTodayString() {
-    return new Date().toISOString().split('T')[0];
-}
-
-// Check if we need to advance to next day
-function checkForDayReset() {
-    const lastSolved = dailyState.lastSolvedDate;
-    const today = getTodayString();
-    
-    if (lastSolved && lastSolved !== today) {
-        // It's a new day
-        const todayProgress = dailyState.dayProgress[dailyState.currentDay];
-        
-        if (!todayProgress || !todayProgress.solved) {
-            dailyState.missedCount++;
-        }
-        
-        dailyState.currentDay++;
-        dailyState.locked = false;
-        saveDailyProgress();
-    }
-}
-
-// Get current day's quote
-function getCurrentDailyQuote() {
-    const dayIndex = (dailyState.currentDay - 1) % DAILY_QUOTES.length;
-    return DAILY_QUOTES[dayIndex];
-}
-
-// Load daily quote puzzle
-function loadDailyQuote() {
-    loadDailyProgress();
-    
-    // Show daily stats panel
-    const statsPanel = document.getElementById('daily-stats');
-    const controlsPanel = document.getElementById('daily-controls');
-    
-    if (statsPanel) statsPanel.classList.remove('hidden');
-    if (controlsPanel) controlsPanel.classList.remove('hidden');
-    
-    // Update stats display
-    const dayEl = document.getElementById('current-day');
-    const solvedEl = document.getElementById('solved-count');
-    const missedEl = document.getElementById('missed-count');
-    const authorEl = document.getElementById('quote-author');
-    
-    if (dayEl) dayEl.textContent = dailyState.currentDay;
-    if (solvedEl) solvedEl.textContent = dailyState.solvedCount;
-    if (missedEl) missedEl.textContent = dailyState.missedCount;
-    
-    const quote = getCurrentDailyQuote();
-    if (authorEl) authorEl.textContent = '— ' + quote.author;
-    
-    // Check if already solved today
-    const todayProgress = dailyState.dayProgress[dailyState.currentDay];
-    if (todayProgress?.solved) {
-        dailyState.locked = true;
-    }
-    
-    // Restore progress if exists
-    if (todayProgress) {
-        gameState.originalText = todayProgress.text || quote.text.toUpperCase();
-        gameState.userMappings = { ...todayProgress.mappings };
-        gameState.solved = todayProgress.solved;
-        gameState.hintsRemaining = todayProgress.hints || 3;
-    } else {
-        gameState.originalText = quote.text.toUpperCase();
-        gameState.userMappings = {};
-        gameState.solved = false;
-        gameState.hintsRemaining = 3;
-    }
-    
-    if (typeof generateSymbolMap === 'function') generateSymbolMap();
-    if (typeof renderPuzzle === 'function') renderPuzzle();
-    if (typeof updateAlphabet === 'function') updateAlphabet();
-    
-    const statusMsg = gameState.solved 
-        ? 'Solved! Come back tomorrow for Day ' + (dailyState.currentDay + 1)
-        : 'Day ' + dailyState.currentDay + ': Tap a symbol, then a letter';
-    if (typeof updateStatus === 'function') updateStatus(statusMsg);
-    if (typeof updateSkipButton === 'function') updateSkipButton();
-}
-
-// Save current daily puzzle state
-function saveDailyPuzzleState() {
-    dailyState.dayProgress[dailyState.currentDay] = {
-        text: gameState.originalText,
-        mappings: {...gameState.userMappings},
-        solved: gameState.solved,
-        hints: gameState.hintsRemaining
-    };
-    
-    if (gameState.solved) {
-        dailyState.lastSolvedDate = getTodayString();
-        dailyState.solvedCount++;
-        dailyState.locked = true;
-    }
-    
-    saveDailyProgress();
-    updateDailyStats();
-}
-
-// Update daily stats display
-function updateDailyStats() {
-    const solvedEl = document.getElementById('solved-count');
-    const missedEl = document.getElementById('missed-count');
-    if (solvedEl) solvedEl.textContent = dailyState.solvedCount;
-    if (missedEl) missedEl.textContent = dailyState.missedCount;
-}
-
-// Reset daily progress to Day 1
-function resetDailyProgress() {
-    if (!confirm('Reset Daily Quote progress to Day 1? All progress will be lost.')) {
+(function() {
+    // Wait for game.js to load
+    if (typeof gameState === 'undefined') {
+        console.error('game.js not loaded');
         return;
     }
-    
-    dailyState = {
+
+    // Daily state
+    const STORAGE_KEY = 'symbol_cipher_daily';
+    let dailyState = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
         currentDay: 1,
         solvedCount: 0,
         missedCount: 0,
-        lastSolvedDate: null,
-        dayProgress: {},
-        locked: false
+        lastDate: null
     };
-    
-    saveDailyProgress();
-    loadDailyQuote();
-}
 
-// Hook into mode switching
-let originalSetMode = setMode;
-setMode = function(newMode) {
-    // Save current daily state before leaving daily mode
-    if (gameState.mode === 'daily_quote' && !gameState.solved) {
-        dailyState.dayProgress[dailyState.currentDay] = {
-            text: gameState.originalText,
-            mappings: {...gameState.userMappings},
-            solved: false,
-            hints: gameState.hintsRemaining
-        };
-        saveDailyProgress();
+    // Store original functions
+    const origSetMode = window.setMode;
+    const origNewPuzzle = window.newPuzzle;
+
+    // Helper: save state
+    function saveDaily() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dailyState));
     }
-    
-    // Hide daily UI for non-daily modes
-    if (newMode !== 'daily_quote') {
-        const statsPanel = document.getElementById('daily-stats');
-        const controlsPanel = document.getElementById('daily-controls');
-        if (statsPanel) statsPanel.classList.add('hidden');
-        if (controlsPanel) controlsPanel.classList.add('hidden');
+
+    // Helper: check for new day
+    function checkDay() {
+        const today = new Date().toISOString().split('T')[0];
+        if (dailyState.lastDate && dailyState.lastDate !== today) {
+            // New day - check if yesterday was unsolved
+            const yesterday = dailyState.currentDay;
+            const progress = JSON.parse(localStorage.getItem(STORAGE_KEY + '_day_' + yesterday) || '{}');
+            if (!progress.solved) {
+                dailyState.missedCount++;
+            }
+            dailyState.currentDay++;
+            saveDaily();
+        }
+    }
+
+    // Load daily quote
+    function loadDaily() {
+        checkDay();
         
-        originalSetMode(newMode);
-        return;
+        // Show UI
+        const stats = document.getElementById('daily-stats');
+        const ctrl = document.getElementById('daily-controls');
+        if (stats) stats.classList.remove('hidden');
+        if (ctrl) ctrl.classList.remove('hidden');
+
+        // Update stats
+        document.getElementById('current-day').textContent = dailyState.currentDay;
+        document.getElementById('solved-count').textContent = dailyState.solvedCount;
+        document.getElementById('missed-count').textContent = dailyState.missedCount;
+
+        // Get quote
+        const idx = (dailyState.currentDay - 1) % DAILY_QUOTES.length;
+        const quote = DAILY_QUOTES[idx];
+        document.getElementById('quote-author').textContent = '— ' + quote.author;
+
+        // Restore saved progress
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY + '_day_' + dailyState.currentDay) || '{}');
+        gameState.originalText = saved.text || quote.text.toUpperCase();
+        gameState.userMappings = saved.mappings || {};
+        gameState.solved = saved.solved || false;
+        gameState.hintsRemaining = saved.hints || 3;
+        gameState.selectedSymbol = null;
+
+        // Generate and render
+        generateSymbolMap();
+        renderPuzzle();
+        updateAlphabet();
+        updateStatus(gameState.solved ? 'Solved! Come back tomorrow' : 'Day ' + dailyState.currentDay + ': Tap a symbol');
+        updateSkipButton();
+
+        // Check if locked (already solved today)
+        if (gameState.solved) {
+            document.getElementById('daily-locked-modal').classList.add('visible');
+        }
     }
-    
-    // Save current mode state
-    if (gameState.originalText) {
-        gameState.saved[gameState.mode] = {
+
+    // Save progress
+    function saveDay() {
+        localStorage.setItem(STORAGE_KEY + '_day_' + dailyState.currentDay, JSON.stringify({
             text: gameState.originalText,
-            mappings: {...gameState.userMappings},
-            map: {...gameState.symbolMap},
-            hints: gameState.hintsRemaining,
-            solved: gameState.solved
-        };
+            mappings: gameState.userMappings,
+            solved: gameState.solved,
+            hints: gameState.hintsRemaining
+        }));
     }
-    
-    gameState.mode = newMode;
-    
-    // Update UI
-    document.querySelectorAll('.mode-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.mode === newMode);
-    });
-    
-    loadDailyQuote();
-};
 
-// Hook into puzzle completion
-const originalCheckWin = checkWin;
-checkWin = function() {
-    const wasSolved = gameState.solved;
-    originalCheckWin();
-    
-    if (gameState.solved && gameState.mode === 'daily_quote' && !wasSolved) {
-        saveDailyPuzzleState();
-    }
-};
+    // Override setMode
+    window.setMode = function(mode) {
+        // Save if leaving daily mode
+        if (gameState.mode === 'daily_quote' && !gameState.solved) {
+            saveDay();
+            dailyState.lastDate = new Date().toISOString().split('T')[0];
+            saveDaily();
+        }
 
-// Setup reset button
-document.addEventListener('DOMContentLoaded', function() {
-    const resetBtn = document.getElementById('reset-daily-btn');
-    const lockedBtn = document.getElementById('locked-ok-btn');
-    
-    if (resetBtn) {
-        resetBtn.addEventListener('click', resetDailyProgress);
-    }
-    
-    if (lockedBtn) {
-        lockedBtn.addEventListener('click', function() {
+        // Hide daily UI
+        if (mode !== 'daily_quote') {
+            document.getElementById('daily-stats')?.classList.add('hidden');
+            document.getElementById('daily-controls')?.classList.add('hidden');
             document.getElementById('daily-locked-modal')?.classList.remove('visible');
+            return origSetMode(mode);
+        }
+
+        // Save current mode
+        if (gameState.originalText) {
+            gameState.saved[gameState.mode] = {
+                text: gameState.originalText,
+                mappings: {...gameState.userMappings},
+                map: {...gameState.symbolMap},
+                hints: gameState.hintsRemaining,
+                solved: gameState.solved
+            };
+        }
+
+        gameState.mode = mode;
+        document.querySelectorAll('.mode-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.mode === mode);
         });
-    }
-    
-    // Check if we loaded in daily mode
-    if (gameState.mode === 'daily_quote') {
-        loadDailyQuote();
-    }
-});
+
+        loadDaily();
+    };
+
+    // Override newPuzzle for daily mode
+    window.newPuzzle = function() {
+        if (gameState.mode === 'daily_quote') {
+            // Daily mode - don't generate new puzzle, just save current state
+            if (gameState.solved) {
+                dailyState.solvedCount++;
+                dailyState.lastDate = new Date().toISOString().split('T')[0];
+                saveDaily();
+                saveDay();
+            }
+            return;
+        }
+        return origNewPuzzle();
+    };
+
+    // Hook into checkWin
+    const origCheckWin = window.checkWin;
+    window.checkWin = function() {
+        origCheckWin();
+        if (gameState.solved && gameState.mode === 'daily_quote') {
+            dailyState.solvedCount++;
+            dailyState.lastDate = new Date().toISOString().split('T')[0];
+            saveDaily();
+            saveDay();
+        }
+    };
+
+    // Reset button
+    document.getElementById('reset-daily-btn')?.addEventListener('click', function() {
+        if (!confirm('Reset to Day 1?')) return;
+        dailyState = { currentDay: 1, solvedCount: 0, missedCount: 0, lastDate: null };
+        saveDaily();
+        document.getElementById('daily-locked-modal')?.classList.remove('visible');
+        loadDaily();
+    });
+
+    // Locked modal OK button
+    document.getElementById('locked-ok-btn')?.addEventListener('click', function() {
+        document.getElementById('daily-locked-modal')?.classList.remove('visible');
+    });
+
+    console.log('Daily Quote mode loaded');
+})();

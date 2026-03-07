@@ -3053,7 +3053,7 @@ let gameState = {
 
 document.addEventListener('DOMContentLoaded', initGame);
 
-function initGame2() {
+function initGame() {
   createAlphabet();
   setupEventListeners();
   newPuzzle();
