@@ -369,3 +369,160 @@ body {
         font-size: 16px;
     }
 }
+
+/* ================================
+   DAILY QUOTE MODE STYLES
+   ================================ */
+
+/* Daily Stats Panel - New Layout */
+.daily-stats {
+    background: linear-gradient(145deg, #f7f3ff 0%, #ede9ff 100%);
+    border-radius: 12px;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-left {
+    flex: 1;
+}
+
+.stat-right {
+    display: flex;
+    gap: 15px;
+}
+
+.day-label {
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    color: var(--text-muted);
+}
+
+.day-number {
+    color: var(--accent);
+    font-size: clamp(1.2rem, 3vw, 1.5rem);
+    font-weight: 700;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: clamp(0.85rem, 2.5vw, 1rem);
+}
+
+.stat-item.solved {
+    color: #48bb78;
+}
+
+.stat-item.missed {
+    color: #e53e3e;
+}
+
+/* Author Toggle Container */
+.author-toggle-container {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    padding: 10px 15px;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: clamp(0.8rem, 2vw, 0.95rem);
+    color: var(--text-muted);
+}
+
+.toggle-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.toggle-text {
+    user-select: none;
+}
+
+.quote-author {
+    margin-top: 8px;
+    font-style: italic;
+    color: var(--text-muted);
+    font-size: clamp(0.85rem, 2vw, 1rem);
+}
+
+/* Solved Author in Modal */
+.solved-author {
+    font-style: italic;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+}
+
+/* Daily Controls */
+.daily-controls {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.reset-btn {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.reset-btn:hover {
+    background: #feb2b2;
+}
+
+/* Reset Confirmation Modal */
+.reset-warning {
+    text-align: left;
+    margin: 15px 0;
+    padding: 15px;
+    background: #fff5f5;
+    border-radius: 10px;
+    border-left: 4px solid #e53e3e;
+}
+
+.reset-warning ul {
+    margin: 10px 0 10px 20px;
+    color: var(--text-dark);
+}
+
+.reset-warning li {
+    margin: 5px 0;
+}
+
+.reset-caution {
+    color: #c53030;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+.modal-btn.danger {
+    background: #e53e3e;
+    color: white;
+}
+
+.modal-btn.danger:hover {
+    background: #c53030;
+}
+
+/* Daily Summary in Locked Modal */
+.daily-summary {
+    margin: 15px 0;
+    padding: 12px;
+    background: #f7fafc;
+    border-radius: 8px;
+}
+
+.daily-summary p {
+    margin: 5px 0;
+    color: var(--text-muted);
+}

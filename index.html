@@ -17,12 +17,22 @@
 
         <!-- Daily Stats Panel (shown in Daily Quote mode) -->
         <div id="daily-stats" class="daily-stats hidden">
-            <div class="stat-row">
-                <span>Day: <strong id="current-day">1</strong></span>
-                <span>Solved: <strong id="solved-count">0</strong></span>
-                <span>Missed: <strong id="missed-count">0</strong></span>
+            <div class="stat-left">
+                <span class="day-label">Day <strong id="current-day" class="day-number">1</strong></span>
             </div>
-            <div class="quote-author" id="quote-author"></div>
+            <div class="stat-right">
+                <span class="stat-item solved">✓ <strong id="solved-count">0</strong></span>
+                <span class="stat-item missed">✗ <strong id="missed-count">0</strong></span>
+            </div>
+        </div>
+
+        <!-- Author Toggle (shown in Daily Quote mode) -->
+        <div id="author-toggle-container" class="author-toggle-container hidden">
+            <label class="toggle-label">
+                <input type="checkbox" id="author-toggle">
+                <span class="toggle-text">Always show author</span>
+            </label>
+            <div class="quote-author hidden" id="quote-author"></div>
         </div>
 
         <!-- Mode Toggle -->
@@ -68,6 +78,7 @@
                 <div class="sparkles">✨🌸✨</div>
                 <h2 class="modal-title">Puzzle Solved!</h2>
                 <p id="solved-text" class="solved-text"></p>
+                <div id="solved-author" class="solved-author"></div>
                 <div class="modal-buttons">
                     <button class="modal-btn primary" id="modal-next-btn">Next Puzzle</button>
                     <button class="modal-btn secondary" id="save-quote-btn">Save Quote</button>
@@ -87,6 +98,27 @@
                 </div>
                 <div class="modal-buttons">
                     <button class="modal-btn primary" id="locked-ok-btn">Got it</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reset Confirmation Modal -->
+        <div id="reset-confirm-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="sparkles">⚠️</div>
+                <h2 class="modal-title">Reset Progress?</h2>
+                <div class="reset-warning">
+                    <p><strong>This will:</strong></p>
+                    <ul>
+                        <li>Reset to Day 1</li>
+                        <li>Clear all solved/missed stats</li>
+                        <li>Delete all daily progress</li>
+                    </ul>
+                    <p class="reset-caution">This action cannot be undone!</p>
+                </div>
+                <div class="modal-buttons">
+                    <button class="modal-btn secondary" id="reset-cancel-btn">Cancel</button>
+                    <button class="modal-btn danger" id="reset-confirm-btn">Yes, Reset Everything</button>
                 </div>
             </div>
         </div>
