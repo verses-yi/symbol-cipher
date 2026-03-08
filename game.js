@@ -3055,8 +3055,7 @@ document.addEventListener('DOMContentLoaded', initGame);
 
 function initGame() {
   createAlphabet();
-  setupEventListeners();
-  newPuzzle();
+  setupEventListeners(); if(!window.skipNewPuzzleOnInit)newPuzzle(); window.skipNewPuzzleOnInit=false;
 }
 
 function createAlphabet() {
