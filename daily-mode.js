@@ -215,4 +215,12 @@
         loadDaily();
     });
 
-    document.getElementById('reset-cancel-btn')?.addEventListener('click', function() {
+    document.getElementById('reset-cancel-btn')?.addEventListener('click', function() {    document.getElementById("reset-confirm-modal")?.classList.remove("visible");
+});
+
+document.getElementById("locked-ok-btn")?.addEventListener("click", function() {
+    document.getElementById("daily-locked-modal")?.classList.remove("visible");
+});
+
+console.log("Daily Quote mode loaded");
+})();
