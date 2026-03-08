@@ -141,7 +141,7 @@
         if (gameState.solved) {
             document.getElementById('daily-locked-modal')?.classList.add('visible');
             if (typeof updateStatus === 'function') {
-                updateStatus('Solved! Come back tomorrow for Day ' + (dailyState.currentDay + 1));
+                updateStatus('✓ Solved! Come back tomorrow for Day ' + (dailyState.currentDay + 1), 'solved-daily');
             }
         } else {
             if (typeof updateStatus === 'function') {

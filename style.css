@@ -538,3 +538,25 @@ body {
     position: relative;
     z-index: 1;
 }
+
+/* Daily Quote - Bold and Larger Author */
+.daily-quote .quote-author,
+#quote-author,
+#solved-author {
+    font-weight: 700;
+    font-size: clamp(1rem, 3vw, 1.3rem);
+    color: var(--text-dark);
+}
+
+/* Solved message in Daily Quote - Bold and Larger */
+.status-message.solved-daily {
+    font-weight: 700;
+    font-size: clamp(1.1rem, 3.5vw, 1.4rem);
+    color: #48bb78;
+}
+
+/* Daily locked modal solved text */
+.daily-summary strong {
+    font-weight: 700;
+    font-size: 1.1em;
+}
