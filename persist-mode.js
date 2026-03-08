@@ -1,4 +1,4 @@
-// Simple Word/Quote Persistence - MUST load AFTER game.js
+// Word/Quote Persistence - Load AFTER game.js
 (function() {
     const SAVE_KEY = 'cipher_save';
 
@@ -51,53 +51,36 @@
 
         const status = document.getElementById('status-message');
         if (status) status.textContent = gameState.solved ? 'Solved!' : 'Tap a symbol, then a letter';
+
+        console.log('PERSIST: Restored', mode, '-', saved.text.substring(0, 20));
     }
 
-    // CRITICAL: Re-attach initGame with our hook
-    const origInitGame = window.initGame;
-    if (typeof origInitGame !== 'function') {
-        console.error('PERSIST: initGame not found');
-        return;
-    }
+    // ========== RUN RESTORE IMMEDIATELY ==========
+    // By the time this script loads, initGame has already run
+    restore();
 
-    // Remove old listener and add hooked version
-    // The old listener is still there with the old reference
-    // We need to run restore AFTER initGame completes
-
-    window.initGame = function() {
-        origInitGame();   // Let game create puzzle
-        restore();        // Then overwrite with saved state
-    };
-
-    // Since DOMContentLoaded already fired (we're loading after game.js),
-    // we need to trigger restore manually one time
-    if (document.readyState !== 'loading') {
-        // DOM is already ready, initGame already ran
-        // Run restore now
-        setTimeout(restore, 10);
-    }
-
-    // Also hook setMode
+    // ========== HOOK SETMODE ==========
     const origSetMode = window.setMode;
     window.setMode = function(mode) {
-        save(gameState.mode);   // Save current
-        origSetMode(mode);      // Switch
+        save(gameState.mode);   // Save current before switch
+        origSetMode(mode);      // Switch modes
         setTimeout(restore, 0); // Restore new mode
     };
 
-    // Hook newPuzzle - clear save
+    // ========== HOOK NEWPUZZLE ==========
     const origNewPuzzle = window.newPuzzle;
     window.newPuzzle = function() {
         const mode = gameState.mode;
         if (mode === 'word' || mode === 'quote') {
             localStorage.removeItem(SAVE_KEY + '_' + mode);
             gameState.saved[mode] = { text: '', map: {}, mappings: {}, hints: 3, solved: false };
+            console.log('PERSIST: Cleared save for', mode);
         }
         if (mode === 'daily_quote') return;
         origNewPuzzle();
     };
 
-    // Hook selectLetter
+    // ========== HOOK SELECTLETTER ==========
     const origSelectLetter = window.selectLetter;
     if (origSelectLetter) {
         window.selectLetter = function(letter) {
@@ -106,7 +89,7 @@
         };
     }
 
-    // Hook checkWin
+    // ========== HOOK CHECKWIN ==========
     const origCheckWin = window.checkWin;
     window.checkWin = function() {
         const wasSolved = gameState.solved;
@@ -116,5 +99,5 @@
         }
     };
 
-    console.log('PERSIST: Persistence loaded');
+    console.log('PERSIST: Loaded and ready');
 })();
