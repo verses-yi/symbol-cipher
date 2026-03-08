@@ -526,3 +526,15 @@ body {
     margin: 5px 0;
     color: var(--text-muted);
 }
+
+/* Ensure modals are on top */
+#reset-confirm-modal,
+#daily-locked-modal {
+    z-index: 2000;
+}
+
+/* Ensure reset button is clickable */
+.reset-btn {
+    position: relative;
+    z-index: 1;
+}

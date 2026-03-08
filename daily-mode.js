@@ -200,8 +200,8 @@
     };
 
     // Event listeners
-    document.getElementById('reset-daily-btn')?.addEventListener('click', function() {
-        document.getElementById('reset-confirm-modal')?.classList.add('visible');
+    document.getElementById('reset-daily-btn')?.addEventListener('click', function() { console.log('Reset clicked');
+        var modal = document.getElementById('reset-confirm-modal'); if(modal) modal.classList.add('visible');
     });
 
     document.getElementById('reset-confirm-btn')?.addEventListener('click', function() {
