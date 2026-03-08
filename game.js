@@ -3121,7 +3121,7 @@ function setMode(newMode) {
   }
 }
 
-function newPuzzle() {
+function newPuzzle() {if(window._persistState&&window._persistState[gameState.mode]&&window._persistState[gameState.mode].text&&!window._restored){window._restored=true;var saved=window._persistState[gameState.mode];gameState.originalText=saved.text;gameState.symbolMap=saved.map||{};gameState.userMappings={...(saved.mappings||{})};gameState.hintsRemaining=saved.hints||3;gameState.solved=saved.solved||false;gameState.saved[gameState.mode]={text:saved.text,map:{...(saved.map||{})},mappings:{...(saved.mappings||{})},hints:saved.hints||3,solved:saved.solved||false};if(Object.keys(gameState.symbolMap).length===0)generateSymbolMap();renderPuzzle();updateAlphabet();updateStatus(gameState.solved?'Solved!':"Tap a symbol, then a letter");updateSkipButton();return;}
   gameState.userMappings = {};
   gameState.selectedSymbol = null;
   gameState.hintsRemaining = 3;
