@@ -1,193 +1,107 @@
-// Word and Quote Mode Persistence
-(function() {
-    const SAVE_KEY = 'cipher_standard_mode';
+// Simple Word/Quote Persistence
+// Load AFTER game.js
 
-    function save(key, data) {
-        try { localStorage.setItem(SAVE_KEY + '_' + key, JSON.stringify(data)); }
-        catch (e) {}
+(function() {
+    const SAVE_KEY = 'cipher_save';
+
+    function save(mode) {
+        if (mode !== 'word' && mode !== 'quote') return;
+        localStorage.setItem(SAVE_KEY + '_' + mode, JSON.stringify({
+            text: gameState.originalText,
+            map: gameState.symbolMap,
+            mappings: gameState.userMappings,
+            solved: gameState.solved,
+            hints: gameState.hintsRemaining
+        }));
     }
 
-    function load(key) {
-        try { return JSON.parse(localStorage.getItem(SAVE_KEY + '_' + key)); }
+    function load(mode) {
+        try { return JSON.parse(localStorage.getItem(SAVE_KEY + '_' + mode)); }
         catch(e) { return null; }
     }
 
-    function hasSavedState(mode) {
-        const s = load(mode);
-        return !!(s && s.text);
-    }
+    // Restore after initGame runs
+    function restore() {
+        const mode = gameState.mode;
+        if (mode !== 'word' && mode !== 'quote') return;
 
-    // Apply saved state to gameState
-    function applySavedState(mode) {
         const saved = load(mode);
-        if (!saved || !saved.text) return false;
+        if (!saved || !saved.text) return;
 
+        // Overwrite current state with saved
         gameState.originalText = saved.text;
-        gameState.userMappings = {...(saved.mappings || {})};
         gameState.symbolMap = {...(saved.map || {})};
-        gameState.hintsRemaining = saved.hints || 3;
+        gameState.userMappings = {...(saved.mappings || {})};
         gameState.solved = saved.solved || false;
+        gameState.hintsRemaining = saved.hints || 3;
 
-        // Generate symbols if missing
-        if (Object.keys(gameState.symbolMap).length === 0) {
-            if (typeof generateSymbolMap === 'function') {
-                generateSymbolMap();
-            }
-        }
-
-        // Update gameState.saved
+        // Update saved cache
         gameState.saved[mode] = {
             text: saved.text,
-            mappings: {...(saved.mappings || {})},
             map: {...(saved.map || {})},
+            mappings: {...(saved.mappings || {})},
             hints: saved.hints || 3,
             solved: saved.solved || false
         };
 
-        return true;
-    }
-
-    // Restore and render
-    function restoreAndRender() {
-        const mode = gameState.mode;
-        if (!applySavedState(mode)) return false;
-
+        // Render
         if (typeof renderPuzzle === 'function') renderPuzzle();
         if (typeof updateAlphabet === 'function') updateAlphabet();
         if (typeof updateSkipButton === 'function') updateSkipButton();
 
-        const statusEl = document.getElementById('status-message');
-        if (statusEl) {
-            statusEl.textContent = gameState.solved ? 'Solved!' : 'Tap a symbol, then a letter';
-        }
+        const status = document.getElementById('status-message');
+        if (status) status.textContent = gameState.solved ? 'Solved!' : 'Tap a symbol, then a letter';
 
         console.log('Restored ' + mode + ' mode');
-        return true;
     }
 
-    function saveCurrent() {
-        const mode = gameState.mode;
-        if (mode !== 'word' && mode !== 'quote') return;
-        save(mode, {
-            text: gameState.originalText,
-            mappings: gameState.userMappings,
-            map: gameState.symbolMap,
-            hints: gameState.hintsRemaining,
-            solved: gameState.solved
-        });
-    }
-
-    // ============ Immediate check: Should we skip init? ============
-    // Check ALL saved modes and load them into gameState.saved
-    let skipInit = false;
-
-    ['word', 'quote'].forEach(function(mode) {
-        const saved = load(mode);
-        if (saved && saved.text) {
-            gameState.saved[mode] = {
-                text: saved.text,
-                mappings: {...(saved.mappings || {})},
-                map: {...(saved.map || {})},
-                hints: saved.hints || 3,
-                solved: saved.solved || false
-            };
-
-            // If this is the current mode, mark to skip init
-            if (mode === gameState.mode) {
-                skipInit = true;
-            }
-        }
-    });
-
-    if (skipInit) {
-        console.log('Found saved state for current mode, will skip init newPuzzle');
-        window.skipNewPuzzleOnInit = true;
-    }
-
-    // ============ Hooks ============
-
-    // Hook initGame - restore right after
+    // Hook initGame to restore after it runs
     const origInitGame = window.initGame;
     window.initGame = function() {
-        origInitGame();
-
-        // Restore if current mode has saved state
-        if ((gameState.mode === 'word' || gameState.mode === 'quote') &&
-            gameState.saved[gameState.mode]?.text) {
-            setTimeout(restoreAndRender, 0);
-        }
+        origInitGame();          // Let game create new puzzle
+        restore();               // Then overwrite with saved state
     };
 
     // Hook setMode
     const origSetMode = window.setMode;
     window.setMode = function(mode) {
-        // Save current before switch
-        saveCurrent();
+        save(gameState.mode);    // Save current before switch
 
-        // Check if target mode has saved state
-        const hasSaved = gameState.saved[mode]?.text;
+        origSetMode(mode);       // Switch modes
 
-        if ((mode === 'word' || mode === 'quote') && hasSaved) {
-            // Apply saved state
-            applySavedState(mode);
-
-            // Mode switch UI
-            if (gameState.originalText) {
-                gameState.saved[gameState.mode] = {
-                    text: gameState.originalText,
-                    mappings: {...gameState.userMappings},
-                    map: {...gameState.symbolMap},
-                    hints: gameState.hintsRemaining,
-                    solved: gameState.solved
-                };
-            }
-
-            gameState.mode = mode;
-            document.querySelectorAll('.mode-btn').forEach(b => {
-                b.classList.toggle('active', b.dataset.mode === mode);
-            });
-
-            // Render restored state
-            renderPuzzle();
-            updateAlphabet();
-            updateSkipButton();
-            return;
-        }
-
-        // Normal mode switch
-        origSetMode(mode);
+        restore();               // Restore if saved state exists
     };
 
-    // Hook newPuzzle
+    // Hook newPuzzle - clear save and generate new
     const origNewPuzzle = window.newPuzzle;
     window.newPuzzle = function() {
         const mode = gameState.mode;
         if (mode === 'word' || mode === 'quote') {
             localStorage.removeItem(SAVE_KEY + '_' + mode);
-            gameState.saved[mode] = { text: '', mappings: {}, map: {}, hints: 3, solved: false };
+            gameState.saved[mode] = { text: '', map: {}, mappings: {}, hints: 3, solved: false };
         }
         if (mode === 'daily_quote') return;
         origNewPuzzle();
     };
 
-    // Hook selectLetter
+    // Hook selectLetter - save after guess
     const origSelectLetter = window.selectLetter;
     if (origSelectLetter) {
         window.selectLetter = function(letter) {
             origSelectLetter(letter);
-            saveCurrent();
+            save(gameState.mode);
         };
     }
 
-    // Hook checkWin
+    // Hook checkWin - save when solved
     const origCheckWin = window.checkWin;
     window.checkWin = function() {
         const wasSolved = gameState.solved;
         origCheckWin();
         if (gameState.solved !== wasSolved) {
-            saveCurrent();
+            save(gameState.mode);
         }
     };
 
-    console.log('Word/Quote persistence loaded');
+    console.log('Simple persistence loaded');
 })();
