@@ -67,6 +67,12 @@
             <button class="control-btn next-btn hidden" id="next-btn">✨ Next Puzzle</button>
         </div>
 
+        <!-- Save/Load Controls (all modes) -->
+        <div id="save-load-controls" class="save-load-controls">
+            <button class="control-btn save-btn" id="manual-save-btn" onclick="manualSave(false)">💾 Save</button>
+            <button class="control-btn load-btn" id="manual-load-btn" onclick="manualLoad()">📂 Load</button>
+        </div>
+
         <!-- Daily Quote Controls -->
         <div id="daily-controls" class="daily-controls hidden">
             <button class="control-btn reset-btn" id="reset-daily-btn">🔄 Reset to Day 1</button>
@@ -122,8 +128,18 @@
                 </div>
             </div>
         </div>
+
+        <!-- Save Instructions -->
+        <div class="save-instructions" id="save-instructions">
+            <p><strong>Auto-save:</strong> Progress saves automatically when you guess correctly.</p>
+            <p><strong>Manual save:</strong> Click 💾 Save anytime. Click 📂 Load to restore.</p>
+            <p><em>Daily Quote: Can only load today's puzzle.</em></p>
+        </div>
     </div>
 
-    <script src="daily-quotes-data.js"></script><script src="persist-mode.js"></script><script src="game.js"></script><script src="persist-save.js"></script><script src="daily-mode.js"></script>
+    <script src="daily-quotes-data.js"></script>
+    <script src="game.js"></script>
+    <script src="persist-mode.js"></script>
+    <script src="daily-mode.js"></script>
 </body>
 </html>

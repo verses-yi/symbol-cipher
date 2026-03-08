@@ -560,3 +560,49 @@ body {
     font-weight: 700;
     font-size: 1.1em;
 }
+
+/* Save/Load Controls */
+.save-load-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.save-btn {
+    background: #c6f6d5;
+    color: #276749;
+}
+
+.save-btn:hover {
+    background: #9ae6b4;
+}
+
+.load-btn {
+    background: #bee3f8;
+    color: #2c5282;
+}
+
+.load-btn:hover {
+    background: #90cdf4;
+}
+
+
+/* Save instructions */
+.save-instructions {
+    margin-top: 15px;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.save-instructions ol {
+    margin: 8px 0 0 18px;
+}
+
+.save-instructions li {
+    margin: 4px 0;
+}
+
