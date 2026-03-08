@@ -153,6 +153,10 @@
 
         updateStatus(gameState.solved ? 'Solved!' : 'Tap a symbol, then a letter');
 
+        // Update hint button
+        const hintBtn = document.getElementById('hint-btn');
+        if (hintBtn) hintBtn.textContent = `💡 Hint (${gameState.hintsRemaining})`;
+
         // Update author visibility for daily quote
         if (mode === 'daily_quote' && typeof updateAuthor === 'function') {
             updateAuthor();
@@ -220,10 +224,34 @@
     const origSetMode = window.setMode;
     window.setMode = function(mode) {
         origSetMode(mode);
+        setTimeout(updateHintButton, 10);
         setTimeout(window.updateSaveLoadVisibility, 10);
     };
 
+    // ========== UPDATE HINT BUTTON ==========
+    function updateHintButton() {
+        const btn = document.getElementById('hint-btn');
+        if (btn) btn.textContent = `💡 Hint (${gameState.hintsRemaining})`;
+    }
+
     // Initial check
+    // Hook newPuzzle to update hint button after skip/new
+    const origNewPuzzle = window.newPuzzle;
+    if (origNewPuzzle) {
+        window.newPuzzle = function() {
+            const mode = gameState.mode;
+            if (mode === 'word' || mode === 'quote') {
+                localStorage.removeItem(SAVE_KEY + '_' + mode);
+                gameState.saved[mode] = { text: '', map: {}, mappings: {}, hints: 3, solved: false };
+            }
+            if (mode === 'daily_quote') return;
+            origNewPuzzle();
+            setTimeout(updateHintButton, 0);
+        };
+    }
+
+    // Initial hint button update
+    setTimeout(updateHintButton, 100);
     setTimeout(window.updateSaveLoadVisibility, 100);
 
     console.log('Save/Load system loaded (manual + auto-save on correct guess)');
