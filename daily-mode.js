@@ -6,27 +6,24 @@
     let dailyState = { currentDay: 1, solvedCount: 0, missedCount: 0, lastDate: null };
     let settings = { showAuthor: false };
     let dailySymbolMap = {};
+    let alreadyCountedSolved = false; // Prevent double counting
+
     const origSetMode = setMode;
     const origCheckWin = checkWin;
 
     function getToday() { return new Date().toISOString().split('T')[0]; }
-
     function save(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
     function load(key) { try { return JSON.parse(localStorage.getItem(key)); } catch(e) { return null; } }
 
     function checkDay() {
         const today = getToday();
-        // Only increment if lastDate exists AND is different from today
         if (dailyState.lastDate && dailyState.lastDate !== today) {
-            // Check if yesterday was unsolved
             const yesterday = load(STORAGE_KEY + '_day_' + dailyState.currentDay);
             if (!yesterday || !yesterday.solved) dailyState.missedCount++;
-
             dailyState.currentDay++;
             dailyState.lastDate = today;
             save(STORAGE_KEY, dailyState);
         } else if (!dailyState.lastDate) {
-            // First time - set lastDate
             dailyState.lastDate = today;
             save(STORAGE_KEY, dailyState);
         }
@@ -60,7 +57,9 @@
 
     function doReset() {
         dailyState = { currentDay: 1, solvedCount: 0, missedCount: 0, lastDate: null };
+        alreadyCountedSolved = false;
         save(STORAGE_KEY, dailyState);
+        // Clear ALL daily progress
         for (let i = 1; i <= 1000; i++) {
             localStorage.removeItem(STORAGE_KEY + '_day_' + i);
         }
@@ -69,21 +68,27 @@
         loadDaily();
     }
 
-    function loadDaily() {
-        // Load state
+    function loadDailyState() {
         const s = load(STORAGE_KEY);
-        if (s) Object.assign(dailyState, s);
+        if (s) {
+            dailyState.currentDay = s.currentDay || 1;
+            dailyState.solvedCount = s.solvedCount || 0;
+            dailyState.missedCount = s.missedCount || 0;
+            dailyState.lastDate = s.lastDate || null;
+        }
         const st = load(SETTINGS_KEY);
-        if (st) Object.assign(settings, st);
+        if (st) settings = Object.assign(settings, st);
+    }
 
+    function loadDaily() {
+        loadDailyState();
         checkDay();
+        alreadyCountedSolved = false; // Reset for new load
 
-        // Show UI
         document.getElementById('daily-stats')?.classList.remove('hidden');
         document.getElementById('daily-controls')?.classList.remove('hidden');
         document.getElementById('author-toggle-container')?.classList.remove('hidden');
 
-        // Toggle
         const t = document.getElementById('author-toggle');
         if (t) {
             t.checked = settings.showAuthor;
@@ -97,12 +102,10 @@
         updateStats();
         document.getElementById('skip-btn').style.display = 'none';
 
-        // Quote
         const q = getQuote();
         const ae = document.getElementById('quote-author');
         if (ae) ae.textContent = '— ' + q.author;
 
-        // Load progress
         const today = getToday();
         const saved = load(STORAGE_KEY + '_day_' + dailyState.currentDay);
 
@@ -112,34 +115,40 @@
             gameState.solved = saved.solved || false;
             gameState.hintsRemaining = saved.hints || 3;
             dailySymbolMap = saved.symbolMap || {};
+            alreadyCountedSolved = gameState.solved; // Don't count again
         } else {
             gameState.originalText = q.text.toUpperCase();
             gameState.userMappings = {};
             gameState.solved = false;
             gameState.hintsRemaining = 3;
             dailySymbolMap = {};
+            alreadyCountedSolved = false;
             saveDay();
         }
 
         gameState.symbolMap = dailySymbolMap;
 
         if (Object.keys(dailySymbolMap).length === 0 || !gameState.originalText) {
-            generateSymbolMap();
+            if (typeof generateSymbolMap === 'function') generateSymbolMap();
             dailySymbolMap = gameState.symbolMap;
             saveDay();
         }
 
-        renderPuzzle();
-        updateAlphabet();
+        if (typeof renderPuzzle === 'function') renderPuzzle();
+        if (typeof updateAlphabet === 'function') updateAlphabet();
         updateAuthor();
 
         if (gameState.solved) {
             document.getElementById('daily-locked-modal')?.classList.add('visible');
-            updateStatus('Solved! Come back tomorrow for Day ' + (dailyState.currentDay + 1));
+            if (typeof updateStatus === 'function') {
+                updateStatus('Solved! Come back tomorrow for Day ' + (dailyState.currentDay + 1));
+            }
         } else {
-            updateStatus('Day ' + dailyState.currentDay + ': Tap a symbol, then a letter');
+            if (typeof updateStatus === 'function') {
+                updateStatus('Day ' + dailyState.currentDay + ': Tap a symbol, then a letter');
+            }
         }
-        updateSkipButton();
+        if (typeof updateSkipButton === 'function') updateSkipButton();
     }
 
     // Override setMode
@@ -170,10 +179,13 @@
         loadDaily();
     };
 
-    // Override checkWin
+    // Override checkWin - prevent double counting
     window.checkWin = function() {
+        const wasSolved = gameState.solved;
         origCheckWin();
-        if (gameState.solved && gameState.mode === 'daily_quote') {
+
+        if (gameState.solved && gameState.mode === 'daily_quote' && !alreadyCountedSolved) {
+            alreadyCountedSolved = true;
             dailyState.solvedCount++;
             dailyState.lastDate = getToday();
             save(STORAGE_KEY, dailyState);
@@ -185,34 +197,43 @@
         }
     };
 
-    // Event listeners - use standard addEventListener
-    document.addEventListener('DOMContentLoaded', function() {
-        const resetBtn = document.getElementById('reset-daily-btn');
+    // ============ EVENT LISTENERS ============
+
+    function setupResetListeners() {
+        const resetBtn = document.getElementById
         if (resetBtn) {
-            resetBtn.addEventListener('click', function() {
+            resetBtn.onclick = function() {
                 document.getElementById('reset-confirm-modal')?.classList.add('visible');
-            });
+            };
         }
 
         const confirmBtn = document.getElementById('reset-confirm-btn');
         if (confirmBtn) {
-            confirmBtn.addEventListener('click', doReset);
+            confirmBtn.onclick = doReset;
         }
 
         const cancelBtn = document.getElementById('reset-cancel-btn');
         if (cancelBtn) {
-            cancelBtn.addEventListener('click', function() {
+            cancelBtn.onclick = function() {
                 document.getElementById('reset-confirm-modal')?.classList.remove('visible');
-            });
+            };
         }
 
         const okBtn = document.getElementById('locked-ok-btn');
         if (okBtn) {
-            okBtn.addEventListener("click", function() {
-                document.getElementById("daily-locked-modal")?.classList.remove("visible");
-            });
+            okBtn.onclick = function() {
+                document.getElementById('daily-locked-modal')?.classList.remove('visible');
+            };
         }
-    });
+    }
 
-    console.log("Daily mode loaded");
+    // Try to setup listeners immediately
+    setupResetListeners();
+
+    // And also on DOMContentLoaded (fallback)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupResetListeners);
+    }
+
+    console.log('Daily mode v2 loaded');
 })();
