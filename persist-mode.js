@@ -1,107 +1,149 @@
 // Simple Word/Quote Persistence
-// Load AFTER game.js
-
 (function() {
-    const SAVE_KEY = 'cipher_save';
+    console.log('PERSIST: Loading...');
 
-    function save(mode) {
-        if (mode !== 'word' && mode !== 'quote') return;
-        localStorage.setItem(SAVE_KEY + '_' + mode, JSON.stringify({
-            text: gameState.originalText,
-            map: gameState.symbolMap,
-            mappings: gameState.userMappings,
-            solved: gameState.solved,
-            hints: gameState.hintsRemaining
-        }));
-    }
+    try {
+        const SAVE_KEY = 'cipher_save';
 
-    function load(mode) {
-        try { return JSON.parse(localStorage.getItem(SAVE_KEY + '_' + mode)); }
-        catch(e) { return null; }
-    }
+        function save(mode) {
+            if (mode !== 'word' && mode !== 'quote') return;
+            try {
+                localStorage.setItem(SAVE_KEY + '_' + mode, JSON.stringify({
+                    text: gameState.originalText,
+                    map: gameState.symbolMap,
+                    mappings: gameState.userMappings,
+                    solved: gameState.solved,
+                    hints: gameState.hintsRemaining
+                }));
+            } catch(e) {}
+        }
 
-    // Restore after initGame runs
-    function restore() {
-        const mode = gameState.mode;
-        if (mode !== 'word' && mode !== 'quote') return;
+        function load(mode) {
+            try { return JSON.parse(localStorage.getItem(SAVE_KEY + '_' + mode)); }
+            catch(e) { return null; }
+        }
 
-        const saved = load(mode);
-        if (!saved || !saved.text) return;
+        // Restore saved state
+        function restore() {
+            console.log('PERSIST: Trying to restore...');
+            const mode = gameState.mode;
+            if (mode !== 'word' && mode !== 'quote') {
+                console.log('PERSIST: Not word/quote mode, skipping');
+                return;
+            }
 
-        // Overwrite current state with saved
-        gameState.originalText = saved.text;
-        gameState.symbolMap = {...(saved.map || {})};
-        gameState.userMappings = {...(saved.mappings || {})};
-        gameState.solved = saved.solved || false;
-        gameState.hintsRemaining = saved.hints || 3;
+            const saved = load(mode);
+            if (!saved || !saved.text) {
+                console.log('PERSIST: No saved state for', mode);
+                return;
+            }
 
-        // Update saved cache
-        gameState.saved[mode] = {
-            text: saved.text,
-            map: {...(saved.map || {})},
-            mappings: {...(saved.mappings || {})},
-            hints: saved.hints || 3,
-            solved: saved.solved || false
+            console.log('PERSIST: Found saved', mode, 'with text:', saved.text.substring(0, 20));
+
+            // Overwrite current state
+            gameState.originalText = saved.text;
+            gameState.symbolMap = {...(saved.map || {})};
+            gameState.userMappings = {...(saved.mappings || {})};
+            gameState.solved = saved.solved || false;
+            gameState.hintsRemaining = saved.hints || 3;
+
+            console.log('PERSIST: State restored, symbolMap keys:', Object.keys(gameState.symbolMap).length);
+
+            // Update saved cache
+            gameState.saved[mode] = {
+                text: saved.text,
+                map: {...(saved.map || {})},
+                mappings: {...(saved.mappings || {})},
+                hints: saved.hints || 3,
+                solved: saved.solved || false
+            };
+
+            // Render
+            console.log('PERSIST: Rendering...');
+            if (typeof renderPuzzle === 'function') {
+                renderPuzzle();
+                console.log('PERSIST: renderPuzzle called');
+            }
+            if (typeof updateAlphabet === 'function') {
+                updateAlphabet();
+                console.log('PERSIST: updateAlphabet called');
+            }
+            if (typeof updateSkipButton === 'function') updateSkipButton();
+
+            const status = document.getElementById('status-message');
+            if (status) status.textContent = gameState.solved ? 'Solved!' : 'Tap a symbol, then a letter';
+
+            console.log('PERSIST: Restore complete for', mode);
+        }
+
+        // Hook initGame
+        console.log('PERSIST: initGame exists?', typeof window.initGame);
+        const origInitGame = window.initGame;
+
+        if (typeof origInitGame !== 'function') {
+            console.error('PERSIST: initGame not found!');
+            return;
+        }
+
+        window.initGame = function() {
+            console.log('PERSIST: initGame starting...');
+            origInitGame();
+            console.log('PERSIST: initGame complete, restoring...');
+            restore();
+        };
+        console.log('PERSIST: Hooked initGame');
+
+        // Hook setMode
+        const origSetMode = window.setMode;
+        window.setMode = function(mode) {
+            console.log('PERSIST: setMode to', mode);
+            save(gameState.mode);  // Save current
+            origSetMode(mode);     // Switch
+            setTimeout(restore, 0); // Restore new mode
         };
 
-        // Render
-        if (typeof renderPuzzle === 'function') renderPuzzle();
-        if (typeof updateAlphabet === 'function') updateAlphabet();
-        if (typeof updateSkipButton === 'function') updateSkipButton();
-
-        const status = document.getElementById('status-message');
-        if (status) status.textContent = gameState.solved ? 'Solved!' : 'Tap a symbol, then a letter';
-
-        console.log('Restored ' + mode + ' mode');
-    }
-
-    // Hook initGame to restore after it runs
-    const origInitGame = window.initGame;
-    window.initGame = function() {
-        origInitGame();          // Let game create new puzzle
-        restore();               // Then overwrite with saved state
-    };
-
-    // Hook setMode
-    const origSetMode = window.setMode;
-    window.setMode = function(mode) {
-        save(gameState.mode);    // Save current before switch
-
-        origSetMode(mode);       // Switch modes
-
-        restore();               // Restore if saved state exists
-    };
-
-    // Hook newPuzzle - clear save and generate new
-    const origNewPuzzle = window.newPuzzle;
-    window.newPuzzle = function() {
-        const mode = gameState.mode;
-        if (mode === 'word' || mode === 'quote') {
-            localStorage.removeItem(SAVE_KEY + '_' + mode);
-            gameState.saved[mode] = { text: '', map: {}, mappings: {}, hints: 3, solved: false };
-        }
-        if (mode === 'daily_quote') return;
-        origNewPuzzle();
-    };
-
-    // Hook selectLetter - save after guess
-    const origSelectLetter = window.selectLetter;
-    if (origSelectLetter) {
-        window.selectLetter = function(letter) {
-            origSelectLetter(letter);
-            save(gameState.mode);
+        // Hook newPuzzle
+        const origNewPuzzle = window.newPuzzle;
+        window.newPuzzle = function() {
+            console.log('PERSIST: newPuzzle, clearing save for', gameState.mode);
+            const mode = gameState.mode;
+            if (mode === 'word' || mode === 'quote') {
+                localStorage.removeItem(SAVE_KEY + '_' + mode);
+                gameState.saved[mode] = { text: '', map: {}, mappings: {}, hints: 3, solved: false };
+            }
+            if (mode === 'daily_quote') return;
+            origNewPuzzle();
         };
-    }
 
-    // Hook checkWin - save when solved
-    const origCheckWin = window.checkWin;
-    window.checkWin = function() {
-        const wasSolved = gameState.solved;
-        origCheckWin();
-        if (gameState.solved !== wasSolved) {
-            save(gameState.mode);
+        // Hook selectLetter
+        const origSelectLetter = window.selectLetter;
+        if (origSelectLetter) {
+            window.selectLetter = function(letter) {
+                origSelectLetter(letter);
+                save(gameState.mode);
+            };
         }
-    };
 
-    console.log('Simple persistence loaded');
+        // Hook checkWin
+        const origCheckWin = window.checkWin;
+        window.checkWin = function() {
+            const wasSolved = gameState.solved;
+            origCheckWin();
+            if (gameState.solved !== wasSolved) {
+                save(gameState.mode);
+            }
+        };
+
+        // Also try restore after a short delay (fallback)
+        setTimeout(function() {
+            console.log('PERSIST: Fallback restore check...');
+            if (!gameState.originalText || gameState.originalText === '') {
+                restore();
+            }
+        }, 100);
+
+        console.log('PERSIST: Setup complete');
+    } catch(e) {
+        console.error('PERSIST: Fatal error:', e);
+    }
 })();
