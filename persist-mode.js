@@ -3,7 +3,9 @@
     const SAVE_KEY = 'cipher_standard_mode';
 
     function save(key, data) {
-        localStorage.setItem(SAVE_KEY + '_' + key, JSON.stringify(data));
+        try {
+            localStorage.setItem(SAVE_KEY + '_' + key, JSON.stringify(data));
+        } catch (e) {}
     }
 
     function load(key) {
@@ -11,55 +13,94 @@
         catch(e) { return null; }
     }
 
-    // Restore a specific mode
-    function restoreMode(mode) {
+    // Called after initGame - apply saved state to current mode
+    function restoreAfterInit() {
+        const mode = gameState.mode;
+        if (mode !== 'word' && mode !== 'quote') return;
+
         const saved = load(mode);
-        if (saved && saved.text) {
-            gameState.saved[mode] = {
-                text: saved.text,
-                mappings: saved.mappings || {},
-                map: saved.map || {},
-                hints: saved.hints || 3,
-                solved: saved.solved || false
-            };
-
-            // If currently in this mode, apply immediately
-            if (gameState.mode === mode) {
-                gameState.originalText = saved.text;
-                gameState.userMappings = {...(saved.mappings || {})};
-                gameState.symbolMap = {...(saved.map || {})};
-                gameState.hintsRemaining = saved.hints || 3;
-                gameState.solved = saved.solved || false;
-
-                if (typeof generateSymbolMap === 'function' && (!saved.map || Object.keys(saved.map).length === 0)) {
-                    generateSymbolMap();
-                }
-                if (typeof renderPuzzle === 'function') renderPuzzle();
-                if (typeof updateAlphabet === 'function') updateAlphabet();
-                if (typeof updateSkipButton === 'function') updateSkipButton();
-                if (typeof updateStatus === 'function') {
-                    updateStatus(gameState.solved ? 'Solved!' : 'Tap a symbol, then a letter');
-                }
-                return true;
-            }
+        if (!saved || !saved.text) {
+            // No saved state - clear just in case
+            gameState.saved[mode] = { text: '', mappings: {}, map: {}, hints: 3, solved: false };
+            return;
         }
-        return false;
+
+        // Apply saved state
+        gameState.originalText = saved.text;
+        gameState.userMappings = {...(saved.mappings || {})};
+        gameState.symbolMap = {...(saved.map || {})};
+        gameState.hintsRemaining = saved.hints || 3;
+        gameState.solved = saved.solved || false;
+
+        // Regenerate symbol map if missing
+        if (Object.keys(gameState.symbolMap).length === 0 && typeof generateSymbolMap === 'function') {
+            generateSymbolMap();
+        }
+
+        // Update UI
+        if (typeof renderPuzzle === 'function') renderPuzzle();
+        if (typeof updateAlphabet === 'function') updateAlphabet();
+        if (typeof updateSkipButton === 'function') updateSkipButton();
+
+        // Update status
+        const statusEl = document.getElementById('status-message');
+        if (statusEl) {
+            statusEl.textContent = gameState.solved ? 'Solved!' : 'Tap a symbol, then a letter';
+        }
+
+        console.log('Restored ' + mode + ' mode from save');
     }
 
+    // Save current state
     function saveCurrent() {
-        if (gameState.mode === 'word' || gameState.mode === 'quote') {
-            save(gameState.mode, {
-                text: gameState.originalText,
-                mappings: gameState.userMappings,
-                map: gameState.symbolMap,
-                hints: gameState.hintsRemaining,
-                solved: gameState.solved,
-                timestamp: Date.now()
-            });
-        }
+        const mode = gameState.mode;
+        if (mode !== 'word' && mode !== 'quote') return;
+        save(mode, {
+            text: gameState.originalText,
+            mappings: gameState.userMappings,
+            map: gameState.symbolMap,
+            hints: gameState.hintsRemaining,
+            solved: gameState.solved
+        });
     }
 
-    // Hook selectLetter
+    // Clear saved state
+    function clearSaved(mode) {
+        localStorage.removeItem(SAVE_KEY + '_' + mode);
+        gameState.saved[mode] = { text: '', mappings: {}, map: {}, hints: 3, solved: false };
+    }
+
+    // Mark game as started (prevents initGame from generating new puzzle if we have saves)
+    function shouldSkipInit() {
+        // Check if there's a save for the default mode (word)
+        const wordSave = load('word');
+        const quoteSave = load('quote');
+        return !!(wordSave?.text || quoteSave?.text);
+    }
+
+    // Hook into setMode
+    const origSetMode = window.setMode;
+    window.setMode = function(mode) {
+        // Save current first
+        saveCurrent();
+
+        // Switch mode
+        origSetMode(mode);
+
+        // Restore new mode
+        if (mode === 'word' || mode === 'quote') {
+            restoreAfterInit();
+        }
+    };
+
+    // Hook into checkWin - save when solved
+    const origCheckWin = window.checkWin;
+    window.checkWin = function() {
+        origCheckWin();
+        saveCurrent();
+    };
+
+    // Hook into selectLetter - save after each guess
     const origSelectLetter = window.selectLetter;
     if (origSelectLetter) {
         window.selectLetter = function(letter) {
@@ -68,65 +109,36 @@
         };
     }
 
-    // Hook checkWin
-    const origCheckWin = window.checkWin;
-    window.checkWin = function() {
-        const wasSolved = gameState.solved;
-        origCheckWin();
-        if (gameState.solved !== wasSolved) {
-            saveCurrent();
-        }
-    };
-
-    // Hook newPuzzle
+    // Hook into newPuzzle - clear save
     const origNewPuzzle = window.newPuzzle;
     window.newPuzzle = function() {
-        // Clear saved state when generating new puzzle
-        if (gameState.mode === 'word' || gameState.mode === 'quote') {
-            localStorage.removeItem(SAVE_KEY + '_' + gameState.mode);
-            gameState.saved[gameState.mode] = { text: '', mappings: {}, map: {}, hints: 3, solved: false };
+        // Don't skip for daily mode
+        if (gameState.mode !== 'daily_quote') {
+            clearSaved(gameState.mode);
         }
         if (gameState.mode === 'daily_quote') return;
         origNewPuzzle();
     };
 
-    // Hook initGame to restore after initialization
+    // Main execution - set flag before initGame runs
+    if (shouldSkipInit()) {
+        window.skipNewPuzzleOnInit = true;
+        console.log('Persistence: skipping init newPuzzle, will restore saved state');
+    }
+
+    // Hook into initGame to restore after it runs
     const origInitGame = window.initGame;
+    const hasSaves = shouldSkipInit();
+
     window.initGame = function() {
         // Run original init
         origInitGame();
 
-        // Then restore saved state for current mode
-        setTimeout(function() {
-            if (gameState.mode === 'word' || gameState.mode === 'quote') {
-                restoreMode(gameState.mode);
-            }
-        }, 0);
-    };
-
-    // Also restore in setMode
-    const origSetMode = window.setMode;
-    window.setMode = function(mode) {
-        // Save current before switching
-        saveCurrent();
-
-        // Call original
-        origSetMode(mode);
-
-        // Restore new mode after a tick
-        if (mode === 'word' || mode === 'quote') {
-            setTimeout(function() {
-                restoreMode(mode);
-            }, 0);
+        // Restore saved state if we have any
+        if (hasSaves) {
+            restoreAfterInit();
         }
     };
 
-    // Initial restore if in word/quote mode
-    setTimeout(function() {
-        if (gameState.mode === 'word' || gameState.mode === 'quote') {
-            restoreMode(gameState.mode);
-        }
-    }, 0);
-
-    console.log('Word/Quote persistence loaded');
+    console.log('Word/Quote persistence loaded, hasSaves:', hasSaves);
 })();
