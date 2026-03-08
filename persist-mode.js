@@ -1,23 +1,28 @@
-// Persistence for Word and Quote Modes
-(function() {
-    const STORAGE_KEY = 'symbol_cipher_standard';
+// Word and Quote Mode Persistence
+// Saves progress to localStorage
 
-    function saveStandardMode() {
+(function() {
+    const SAVE_KEY = 'cipher_standard_mode';
+
+    // Save current mode state
+    function saveState() {
         if (gameState.mode === 'word' || gameState.mode === 'quote') {
-            localStorage.setItem(STORAGE_KEY + '_' + gameState.mode, JSON.stringify({
+            const data = {
+                mode: gameState.mode,
                 text: gameState.originalText,
                 mappings: gameState.userMappings,
                 map: gameState.symbolMap,
                 hints: gameState.hintsRemaining,
-                solved: gameState.solved,
-                timestamp: Date.now()
-            }));
+                solved: gameState.solved
+            };
+            localStorage.setItem(SAVE_KEY + '_' + gameState.mode, JSON.stringify(data));
         }
     }
 
-    function loadStandardMode(mode) {
+    // Load saved state into gameState.saved
+    function loadState(mode) {
         try {
-            const saved = JSON.parse(localStorage.getItem(STORAGE_KEY + '_' + mode));
+            const saved = JSON.parse(localStorage.getItem(SAVE_KEY + '_' + mode));
             if (saved && saved.text) {
                 gameState.saved[mode] = {
                     text: saved.text,
@@ -27,74 +32,49 @@
                     solved: saved.solved || false
                 };
             }
-        } catch (e) {
-            console.log('No saved ' + mode);
-        }
+        } catch (e) {}
     }
 
-    // Save on mode switch
-    const origSetMode = window.setMode;
-    window.setMode = function(mode) {
-        // Save current mode before switching
-        if (gameState.mode === 'word' || gameState.mode === 'quote') {
-            saveStandardMode();
-        }
-
-        // Load target mode if exists
-        if (mode === 'word' || mode === 'quote') {
-            loadStandardMode(mode);
-        }
-
-        return origSetMode(mode);
-    };
-
-    // Save on progress
+    // Hook into selectLetter (called when user makes a guess)
     const origSelectLetter = window.selectLetter;
-    if (typeof origSelectLetter === 'function') {
+    if (origSelectLetter) {
         window.selectLetter = function(letter) {
             origSelectLetter(letter);
-            if (gameState.mode === 'word' || gameState.mode === 'quote') {
-                saveStandardMode();
-            }
+            saveState();
         };
     }
 
-    // Save on win
+    // Hook into checkWin
     const origCheckWin = window.checkWin;
-    window.checkWin = function() {
-        const wasSolved = gameState.solved;
-        origCheckWin();
-        if (!wasSolved && gameState.solved) {
-            if (gameState.mode === 'word' || gameState.mode === 'quote') {
-                saveStandardMode();
-            }
-        }
-    };
+    if (origCheckWin) {
+        window.checkWin = function() {
+            origCheckWin();
+            saveState();
+        };
+    }
 
-    // Clear on skip/next
+    // Hook into newPuzzle to clear saved state
     const origNewPuzzle = window.newPuzzle;
-    window.newPuzzle = function() {
-        // Clear saved state for this mode
-        if (gameState.mode === 'word' || gameState.mode === 'quote') {
-            localStorage.removeItem(STORAGE_KEY + '_' + gameState.mode);
-        }
+    if (origNewPuzzle) {
+        window.newPuzzle = function() {
+            // Clear saved state for current mode
+            if (gameState.mode === 'word' || gameState.mode === 'quote') {
+                localStorage.removeItem(SAVE_KEY + '_' + gameState.mode);
+                gameState.saved[gameState.mode] = { text: '', mappings: {}, map: {}, hints: 3, solved: false };
+            }
 
-        // Only generate new if not daily quote mode
-        if (gameState.mode !== 'daily_quote') {
+            // Don't generate new puzzle if in daily mode
+            if (gameState.mode === 'daily_quote') {
+                return;
+            }
+
             origNewPuzzle();
-        }
-    };
+        };
+    }
 
-    // Load on init
-    const origInitGame = window.initGame;
-    window.initGame = function() {
-        // Load saved states
-        loadStandardMode('word');
-        loadStandardMode('quote');
+    // Load saved states on startup
+    loadState('word');
+    loadState('quote');
 
-        // Continue with normal init
-        origInitGame();
-    };
-
-    console.log('Word/Quote persistence loaded');
+    console.log('Word/Quote persistence: loaded');
 })();

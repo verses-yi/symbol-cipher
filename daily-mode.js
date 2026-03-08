@@ -1,68 +1,35 @@
-// Daily Quote Mode - Complete Implementation
+// Daily Quote Mode
 (function() {
-    'use strict';
-    if (typeof gameState === 'undefined') return;
-
     const STORAGE_KEY = 'symbol_cipher_daily';
     const SETTINGS_KEY = 'symbol_cipher_settings';
+
     let dailyState = { currentDay: 1, solvedCount: 0, missedCount: 0, lastDate: null };
-    let settings = { showAuthor: false, __proto__: null };
+    let settings = { showAuthor: false };
     let dailySymbolMap = {};
-    const origSetMode = window.setMode;
-    const origCheckWin = window.checkWin;
+    const origSetMode = setMode;
+    const origCheckWin = checkWin;
 
-    function saveSettings() {
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    }
+    function getToday() { return new Date().toISOString().split('T')[0]; }
 
-    function loadSettings() {
-        try {
-            const s = JSON.parse(localStorage.getItem(SETTINGS_KEY));
-            if (s) Object.assign(settings, s);
-        } catch (e) {}
-    }
-
-    function saveDailyState() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(dailyState));
-    }
-
-    function loadDailyState() {
-        try {
-            const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
-            if (s) Object.assign(dailyState, s);
-        } catch (e) {}
-    }
-
-    function getToday() {
-        return new Date().toISOString().split('T')[0];
-    }
+    function save(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+    function load(key) { try { return JSON.parse(localStorage.getItem(key)); } catch(e) { return null; } }
 
     function checkDay() {
         const today = getToday();
+        // Only increment if lastDate exists AND is different from today
         if (dailyState.lastDate && dailyState.lastDate !== today) {
-            const prev = JSON.parse(localStorage.getItem(STORAGE_KEY + '_day_' + dailyState.currentDay) || '{}');
-            if (!prev.solved) dailyState.missedCount++;
+            // Check if yesterday was unsolved
+            const yesterday = load(STORAGE_KEY + '_day_' + dailyState.currentDay);
+            if (!yesterday || !yesterday.solved) dailyState.missedCount++;
+
             dailyState.currentDay++;
+            dailyState.lastDate = today;
+            save(STORAGE_KEY, dailyState);
+        } else if (!dailyState.lastDate) {
+            // First time - set lastDate
+            dailyState.lastDate = today;
+            save(STORAGE_KEY, dailyState);
         }
-        dailyState.lastDate = today;
-        saveDailyState();
-    }
-
-    function saveDay() {
-        localStorage.setItem(STORAGE_KEY + '_day_' + dailyState.currentDay, JSON.stringify({
-            text: gameState.originalText,
-            mappings: gameState.userMappings,
-            symbolMap: dailySymbolMap,
-            solved: gameState.solved,
-            hints: gameState.hintsRemaining,
-            date: getToday()
-        }));
-    }
-
-    function loadDay(day) {
-        try {
-            return JSON.parse(localStorage.getItem(STORAGE_KEY + '_day_' + day));
-        } catch (e) { return null; }
     }
 
     function getQuote() {
@@ -80,39 +47,64 @@
         if (el) el.classList.toggle('hidden', !settings.showAuthor && !gameState.solved);
     }
 
-    function showSkip(show) {
-        const btn = document.getElementById('skip-btn');
-        if (btn) btn.style.display = show ? '' : 'none';
+    function saveDay() {
+        save(STORAGE_KEY + '_day_' + dailyState.currentDay, {
+            text: gameState.originalText,
+            mappings: gameState.userMappings,
+            symbolMap: dailySymbolMap,
+            solved: gameState.solved,
+            hints: gameState.hintsRemaining,
+            date: getToday()
+        });
+    }
+
+    function doReset() {
+        dailyState = { currentDay: 1, solvedCount: 0, missedCount: 0, lastDate: null };
+        save(STORAGE_KEY, dailyState);
+        for (let i = 1; i <= 1000; i++) {
+            localStorage.removeItem(STORAGE_KEY + '_day_' + i);
+        }
+        document.getElementById('reset-confirm-modal')?.classList.remove('visible');
+        document.getElementById('daily-locked-modal')?.classList.remove('visible');
+        loadDaily();
     }
 
     function loadDaily() {
-        loadDailyState();
-        loadSettings();
+        // Load state
+        const s = load(STORAGE_KEY);
+        if (s) Object.assign(dailyState, s);
+        const st = load(SETTINGS_KEY);
+        if (st) Object.assign(settings, st);
+
         checkDay();
 
+        // Show UI
         document.getElementById('daily-stats')?.classList.remove('hidden');
         document.getElementById('daily-controls')?.classList.remove('hidden');
         document.getElementById('author-toggle-container')?.classList.remove('hidden');
 
-        const toggle = document.getElementById('author-toggle');
-        if (toggle) {
-            toggle.checked = settings.showAuthor;
-            toggle.onchange = function() {
+        // Toggle
+        const t = document.getElementById('author-toggle');
+        if (t) {
+            t.checked = settings.showAuthor;
+            t.onchange = function() {
                 settings.showAuthor = this.checked;
-                saveSettings();
+                save(SETTINGS_KEY, settings);
                 updateAuthor();
             };
         }
 
         updateStats();
-        showSkip(false);
+        document.getElementById('skip-btn').style.display = 'none';
 
-        const quote = getQuote();
-        const authorEl = document.getElementById('quote-author');
-        if (authorEl) authorEl.textContent = '— ' + quote.author;
+        // Quote
+        const q = getQuote();
+        const ae = document.getElementById('quote-author');
+        if (ae) ae.textContent = '— ' + q.author;
 
-        const saved = loadDay(dailyState.currentDay);
+        // Load progress
         const today = getToday();
+        const saved = load(STORAGE_KEY + '_day_' + dailyState.currentDay);
 
         if (saved && saved.date === today) {
             gameState.originalText = saved.text;
@@ -121,7 +113,7 @@
             gameState.hintsRemaining = saved.hints || 3;
             dailySymbolMap = saved.symbolMap || {};
         } else {
-            gameState.originalText = quote.text.toUpperCase();
+            gameState.originalText = q.text.toUpperCase();
             gameState.userMappings = {};
             gameState.solved = false;
             gameState.hintsRemaining = 3;
@@ -129,16 +121,16 @@
             saveDay();
         }
 
-        gameState.symbolMap = { ...dailySymbolMap };
+        gameState.symbolMap = dailySymbolMap;
 
-        if (typeof generateSymbolMap === 'function' && !Object.keys(dailySymbolMap).length) {
+        if (Object.keys(dailySymbolMap).length === 0 || !gameState.originalText) {
             generateSymbolMap();
-            dailySymbolMap = { ...gameState.symbolMap };
+            dailySymbolMap = gameState.symbolMap;
             saveDay();
         }
 
-        if (typeof renderPuzzle === 'function') renderPuzzle();
-        if (typeof updateAlphabet === 'function') updateAlphabet();
+        renderPuzzle();
+        updateAlphabet();
         updateAuthor();
 
         if (gameState.solved) {
@@ -147,20 +139,19 @@
         } else {
             updateStatus('Day ' + dailyState.currentDay + ': Tap a symbol, then a letter');
         }
-        if (typeof updateSkipButton === 'function') updateSkipButton();
+        updateSkipButton();
     }
 
+    // Override setMode
     window.setMode = function(mode) {
-        if (gameState.mode === 'daily_quote') {
-            saveDay();
-        }
+        if (gameState.mode === 'daily_quote') saveDay();
 
         if (mode !== 'daily_quote') {
             document.getElementById('daily-stats')?.classList.add('hidden');
             document.getElementById('daily-controls')?.classList.add('hidden');
             document.getElementById('author-toggle-container')?.classList.add('hidden');
             document.getElementById('daily-locked-modal')?.classList.remove('visible');
-            showSkip(true);
+            document.getElementById('skip-btn').style.display = '';
             return origSetMode(mode);
         }
 
@@ -175,52 +166,53 @@
         }
 
         gameState.mode = mode;
-        document.querySelectorAll('.mode-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.mode === mode);
-        });
-
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
         loadDaily();
     };
 
+    // Override checkWin
     window.checkWin = function() {
         origCheckWin();
         if (gameState.solved && gameState.mode === 'daily_quote') {
             dailyState.solvedCount++;
             dailyState.lastDate = getToday();
-            saveDailyState();
+            save(STORAGE_KEY, dailyState);
             saveDay();
             updateStats();
             updateAuthor();
-
-            // Show author in completion modal
-            const quote = getQuote();
-            const solvedAuthor = document.getElementById('solved-author');
-            if (solvedAuthor) solvedAuthor.textContent = '— ' + quote.author;
+            const sa = document.getElementById('solved-author');
+            if (sa) sa.textContent = '— ' + getQuote().author;
         }
     };
 
-    // Event listeners
-    document.getElementById('reset-daily-btn')?.addEventListener('click', function() { console.log('Reset clicked');
-        var modal = document.getElementById('reset-confirm-modal'); if(modal) modal.classList.add('visible');
-    });
-
-    document.getElementById('reset-confirm-btn')?.addEventListener('click', function() {
-        dailyState = { currentDay: 1, solvedCount: 0, missedCount: 0, lastDate: null };
-        saveDailyState();
-        for (let i = 0; i < 1000; i++) {
-            localStorage.removeItem(STORAGE_KEY + '_day_' + i);
+    // Event listeners - use standard addEventListener
+    document.addEventListener('DOMContentLoaded', function() {
+        const resetBtn = document.getElementById('reset-daily-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function() {
+                document.getElementById('reset-confirm-modal')?.classList.add('visible');
+            });
         }
-        document.getElementById('reset-confirm-modal')?.classList.remove('visible');
-        document.getElementById('daily-locked-modal')?.classList.remove('visible');
-        loadDaily();
+
+        const confirmBtn = document.getElementById('reset-confirm-btn');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', doReset);
+        }
+
+        const cancelBtn = document.getElementById('reset-cancel-btn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function() {
+                document.getElementById('reset-confirm-modal')?.classList.remove('visible');
+            });
+        }
+
+        const okBtn = document.getElementById('locked-ok-btn');
+        if (okBtn) {
+            okBtn.addEventListener("click", function() {
+                document.getElementById("daily-locked-modal")?.classList.remove("visible");
+            });
+        }
     });
 
-    document.getElementById('reset-cancel-btn')?.addEventListener('click', function() {    document.getElementById("reset-confirm-modal")?.classList.remove("visible");
-});
-
-document.getElementById("locked-ok-btn")?.addEventListener("click", function() {
-    document.getElementById("daily-locked-modal")?.classList.remove("visible");
-});
-
-console.log("Daily Quote mode loaded");
+    console.log("Daily mode loaded");
 })();
