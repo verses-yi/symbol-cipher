@@ -200,7 +200,7 @@
     // ============ EVENT LISTENERS ============
 
     function setupResetListeners() {
-        const resetBtn = document.getElementById
+        const resetBtn = document.getElementById('reset-daily-btn');
         if (resetBtn) {
             resetBtn.onclick = function() {
                 document.getElementById('reset-confirm-modal')?.classList.add('visible');
