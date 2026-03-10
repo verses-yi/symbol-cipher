@@ -23,7 +23,7 @@ body {
     background: var(--dawn-gradient);
     min-height: 100vh;
     color: var(--text-dark);
-    display: flex;
+    display: flex !important;
     justify-content: center;
     align-items: flex-start;
     padding: 10px;
@@ -65,7 +65,7 @@ body {
 
 /* Mode Toggle */
 .mode-toggle {
-    display: flex;
+    display: flex !important;
     gap: 8px;
     margin-bottom: 15px;
     justify-content: center;
@@ -102,7 +102,7 @@ body {
 }
 
 .puzzle-display {
-    display: flex;
+    display: flex !important;
     flex-wrap: wrap;
     justify-content: center;
     gap: 4px;
@@ -111,7 +111,7 @@ body {
 }
 
 .word {
-    display: flex;
+    display: flex !important;
     gap: 2px;
     margin: 2px 4px;
     flex-wrap: nowrap;
@@ -120,7 +120,7 @@ body {
 .symbol {
     width: clamp(32px, 8vw, 45px);
     height: clamp(38px, 10vw, 55px);
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     background: white;
@@ -175,7 +175,7 @@ body {
 }
 
 .alphabet {
-    display: flex;
+    display: flex !important;
     flex-wrap: wrap;
     justify-content: center;
     gap: 3px;
@@ -185,7 +185,7 @@ body {
 .letter {
     width: clamp(28px, 7vw, 35px);
     height: clamp(28px, 7vw, 35px);
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     background: white;
@@ -219,7 +219,7 @@ body {
 
 /* Controls - MOBILE OPTIMIZED */
 .controls {
-    display: flex;
+    display: flex !important;
     gap: 8px;
     justify-content: center;
     flex-wrap: wrap;
@@ -281,7 +281,7 @@ body {
 }
 
 .modal.visible {
-    display: flex;
+    display: flex !important;
 }
 
 .modal-content {
@@ -312,7 +312,7 @@ body {
 }
 
 .modal-buttons {
-    display: flex;
+    display: flex !important;
     gap: 8px;
     justify-content: center;
     flex-wrap: wrap;
@@ -380,7 +380,7 @@ body {
     border-radius: 12px;
     padding: 12px 15px;
     margin-bottom: 15px;
-    display: flex;
+    display: flex !important;
     justify-content: space-between;
     align-items: center;
 }
@@ -390,7 +390,7 @@ body {
 }
 
 .stat-right {
-    display: flex;
+    display: flex !important;
     gap: 15px;
 }
 
@@ -406,7 +406,7 @@ body {
 }
 
 .stat-item {
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 5px;
     font-size: clamp(0.85rem, 2.5vw, 1rem);
@@ -430,7 +430,7 @@ body {
 }
 
 .toggle-label {
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     gap: 8px;
@@ -563,7 +563,7 @@ body {
 
 /* Save/Load Controls */
 .save-load-controls {
-    display: flex;
+    display: flex !important;
     gap: 8px;
     justify-content: center;
     margin-top: 10px;
