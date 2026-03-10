@@ -384,6 +384,10 @@ body {
     justify-content: space-between;
     align-items: center;
 }
+/* Fix: Daily stats hidden override */
+.daily-stats.hidden {
+  display: none !important;
+}
 
 .stat-left {
     flex: 1;
