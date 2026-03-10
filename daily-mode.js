@@ -139,7 +139,7 @@
         updateAuthor();
 
         if (gameState.solved) {
-            document.getElementById('daily-locked-modal')?.classList.add('visible');
+            document.getElementById('locked-day').textContent = dailyState.currentDay; document.getElementById('locked-solved').textContent = dailyState.solvedCount; document.getElementById('locked-missed').textContent = dailyState.missedCount; document.getElementById('daily-locked-modal')?.classList.add('visible');
             if (typeof updateStatus === 'function') {
                 updateStatus('✓ Solved! Come back tomorrow for Day ' + (dailyState.currentDay + 1), 'solved-daily');
             }
