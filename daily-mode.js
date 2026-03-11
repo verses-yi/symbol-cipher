@@ -235,6 +235,66 @@
         document.addEventListener('DOMContentLoaded', setupResetListeners);
     }
 
-    console.log('Daily mode v2 loaded');
+    console.log("Daily mode v2 loaded with modal fix");;
 })();
 
+
+// Daily Quote modal override - change "Next Puzzle" to "Got It" and show locked modal
+const origCheckWinForModal = window.checkWin;
+window.checkWin = function() {
+  const wasSolved = gameState.solved;
+  origCheckWinForModal();
+  if (gameState.solved && gameState.mode === 'daily_quote' && !wasSolved) {
+    setTimeout(function() {
+      const nextBtn = document.getElementById('modal-next-btn');
+      if (nextBtn) {
+        nextBtn.textContent = 'Got It';
+        nextBtn.onclick = function() {
+          document.getElementById('completion-modal')?.classList.remove('visible');
+          document.getElementById('locked-day').textContent = dailyState.currentDay;
+          document.getElementById('locked-solved').textContent = dailyState.solvedCount;
+          document.getElementById('locked-missed').textContent = dailyState.missedCount;
+          document.getElementById('daily-locked-modal')?.classList.add('visible');
+        };
+      }
+    }, 550);
+  }
+};
+
+// Save Quote button - copies to clipboard
+function setupSaveQuoteButton() {
+  const saveBtn = document.getElementById('save-quote-btn');
+  if (saveBtn) {
+    saveBtn.onclick = function() {
+      if (gameState.mode !== 'daily_quote') return;
+      const quote = gameState.originalText;
+      const author = getQuote().author;
+      const textToSave = '"' + quote + '" — ' + author;
+      
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToSave).then(function() {
+          const oldText = saveBtn.textContent;
+          saveBtn.textContent = 'Copied!';
+          setTimeout(function() { saveBtn.textContent = oldText; }, 1500);
+        });
+      } else {
+        // Fallback
+        const textarea = document.createElement('textarea');
+        textarea.value = textToSave;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          const oldText = saveBtn.textContent;
+          saveBtn.textContent = 'Copied!';
+          setTimeout(function() { saveBtn.textContent = oldText; }, 1500);
+        } catch(e) {}
+        document.body.removeChild(textarea);
+      }
+    };
+  }
+}
+
+setupSaveQuoteButton();
