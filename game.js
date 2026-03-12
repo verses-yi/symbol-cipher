@@ -3245,14 +3245,7 @@ function checkWin() {
   gameState.solved = true;
   document.querySelectorAll('.symbol').forEach(el => el.classList.add('solved'));
   updateSkipButton();
-  setTimeout(() => {
-    const modal = document.getElementById('completion-modal');
-    const solvedText = document.getElementById('solved-text');
-    if (modal && solvedText) {
-      solvedText.textContent = gameState.originalText;
-      modal.classList.add('visible');
-    }
-  }, 500);
+  // Modal popup removed - puzzle solved state shown via UI instead
 }
 
 function skipPuzzle() {
