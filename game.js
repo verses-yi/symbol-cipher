@@ -3017,6 +3017,17 @@ if (typeof QUOTES_1000 !== 'undefined') {
 }
 // Fallback: minimal set if external file not loaded
 const QUOTES = GAME_QUOTES_1000.length > 0 ? GAME_QUOTES_1000 : [
+  "knowledge is power",
+  "be kind to yourself",
+  "every day is a new beginning",
+  "stars shine in darkness",
+  "do small things with love",
+  "peace comes from within",
+  "happiness is a choice",
+  "let your light shine",
+  "dream big work hard",
+  "believe in yourself"
+];
 
 const SYMBOLS = [
   // Flowers
