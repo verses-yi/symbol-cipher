@@ -3001,7 +3001,18 @@ const WORDS = [
   "youth",
   "zone",];
 
-const QUOTES = [
+// Import quotes from external file if available (Node/browser module compatible)
+let QUOTES_1000 = [];
+if (typeof require !== 'undefined') {
+  try {
+    const quotesData = require('./quotes-data.js');
+    QUOTES_1000 = quotesData.QUOTES_1000 || [];
+  } catch (e) {
+    QUOTES_1000 = [];
+  }
+}
+// Fallback: minimal set if external file not loaded
+const QUOTES = QUOTES_1000.length > 0 ? QUOTES_1000 : [
   "knowledge is power",
   "be kind to yourself",
   "every day is a new beginning",
