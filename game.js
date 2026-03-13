@@ -3002,28 +3002,21 @@ const WORDS = [
   "zone",];
 
 // Import quotes from external file if available (Node/browser module compatible)
-let QUOTES_1000 = [];
-if (typeof require !== 'undefined') {
+let GAME_QUOTES_1000 = [];
+// Check if quotes-data.js loaded QUOTES_1000 (browser, script loaded before this one)
+if (typeof QUOTES_1000 !== 'undefined') {
+  GAME_QUOTES_1000 = QUOTES_1000;
+} else if (typeof require !== 'undefined') {
+  // Node environment
   try {
     const quotesData = require('./quotes-data.js');
-    QUOTES_1000 = quotesData.QUOTES_1000 || [];
+    GAME_QUOTES_1000 = quotesData.QUOTES_1000 || [];
   } catch (e) {
-    QUOTES_1000 = [];
+    GAME_QUOTES_1000 = [];
   }
 }
 // Fallback: minimal set if external file not loaded
-const QUOTES = QUOTES_1000.length > 0 ? QUOTES_1000 : [
-  "knowledge is power",
-  "be kind to yourself",
-  "every day is a new beginning",
-  "stars shine in darkness",
-  "do small things with love",
-  "peace comes from within",
-  "happiness is a choice",
-  "let your light shine",
-  "dream big work hard",
-  "believe in yourself"
-];
+const QUOTES = GAME_QUOTES_1000.length > 0 ? GAME_QUOTES_1000 : [
 
 const SYMBOLS = [
   // Flowers
