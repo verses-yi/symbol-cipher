@@ -19,8 +19,8 @@
         const today = getToday();
         if (dailyState.lastDate && dailyState.lastDate !== today) {
             const yesterday = load(STORAGE_KEY + '_day_' + dailyState.currentDay);
-            if (!yesterday || !yesterday.solved) dailyState.missedCount++;
-            dailyState.currentDay++;
+if (!yesterday || !yesterday.solved) { dailyState.missedCount++; } else { dailyState.currentDay++; }
+
             dailyState.lastDate = today;
             save(STORAGE_KEY, dailyState);
         } else if (!dailyState.lastDate) {
